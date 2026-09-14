@@ -195,9 +195,8 @@ python -m pip install --upgrade pip >nul 2>&1
 
 REM --- Dependencias -----------------------------------------------------
 echo   Instalando dependencias (unos minutos)...
-REM  pyaudio y python-ydotool se saltan: el primero necesita compilador y
-REM  sounddevice ya cubre el audio; el segundo es especifico de Linux.
-findstr /v /i /b /c:"pyaudio" /c:"python-ydotool" requirements.txt > requirements.win.txt
+REM  python-ydotool se salta: es especifico de Linux.
+findstr /v /i /b /c:"python-ydotool" requirements.txt > requirements.win.txt
 REM Si pip falla se REINTENTA sin cache: el fallo tipico es
 REM "Permission denied" sobre %LOCALAPPDATA%\pip\cache, y con
 REM --no-cache-dir se esquiva sin tocar permisos.

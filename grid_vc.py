@@ -387,8 +387,8 @@ def _comprobar_donde_cayo(pedido_x, pedido_y, destino_x, destino_y):
         import config
         if not getattr(config, "DEPURAR_PUNTERO", False):
             return
-        import shutil
-        k = shutil.which("kdotool")
+        import keyboard_keys
+        k = keyboard_keys.find_kdotool()
         if not k:
             return
         r = subprocess.run([k, "getmouselocation"], capture_output=True,

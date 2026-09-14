@@ -212,8 +212,8 @@ TOUCH_TRACK_POLL_MS = 33
 # de una ventana externa concreta -- si la rellenas, además de lo de
 # arriba se intenta activar ESA ventana en concreto con `kdotool`
 # (https://github.com/jinliu/kdotool -- ver actions.activate_target_window();
-# instálalo con `cargo install kdotool` o descargando el binario desde
-# sus releases de GitHub). NOTA: `kstart`/kde-cli-tools NO sirve para
+# instálalo descargando el binario desde sus releases de GitHub, como
+# explica install.sh). NOTA: `kstart`/kde-cli-tools NO sirve para
 # esto en KDE Frameworks 6 -- perdió las opciones --window/--activate en
 # la reescritura para KF6, comprobado directamente en su código fuente.
 # Vacío ("") por defecto = desactivado (recomendado, no hace falta para

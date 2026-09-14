@@ -54,11 +54,19 @@ class MicrophoneManager:
         """
         devices = MicrophoneManager.list_input_devices()
         name_lower = name_pattern.lower()
-        
+
+        # El nombre EXACTO gana. Buscar solo "contiene" cogía el primero de
+        # la lista: con INPUT_DEVICE = "default" se abría "sysdefault", que
+        # va antes (visto el 15-sep-2026 en una Debian limpia). Allí salió
+        # bien por casualidad; en otro equipo es otro micrófono distinto del
+        # elegido, y sin ningún aviso.
+        for dev in devices:
+            if dev["name"].lower() == name_lower:
+                return dev["index"]
         for dev in devices:
             if name_lower in dev["name"].lower():
                 return dev["index"]
-        
+
         return None
 
     @staticmethod

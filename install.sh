@@ -116,6 +116,7 @@ echo "   paquete: $PKG_DIR"
 # preguntarla solo daría ocasión de romperla sin querer.
 QUIERE_REMOTO=0; QUIERE_VOZ=0
 FRASE_LOGIN=""; USUARIO=""; GENERO_VOZ="femenina"
+LENGUA=""       # la lengua materna; al actualizar se lee de config_local.py
 preguntar_si(){ # $1=pregunta  $2=por_defecto(s/n)
   local d="$2" p
   [ "$d" = "s" ] && p="[S/n]" || p="[s/N]"
@@ -127,6 +128,16 @@ if [ "$MODO" = "instalación nueva" ]; then
   echo
   azul "== Configuración inicial =="
   echo "   Unas preguntas. Al actualizar no se volverán a hacer."
+  echo
+
+  # Decide qué modelos se bajan: el GRANDE de la lengua materna (dicta,
+  # cuenta, puntúa) y el PEQUEÑO de la otra, que solo reconoce órdenes. Ver
+  # config.LENGUA_MATERNA. Hasta la 0.2.1 no se preguntaba y se bajaban los
+  # dos grandes: 10 GB de RAM en uso, y en una máquina de 6 GB no arrancaba.
+  echo "   Tu lengua materna es la que dicta, cuenta y puntúa; la otra solo"
+  echo "   reconoce órdenes."
+  read -rp "   ¿Tu lengua materna? es = español, en = inglés [es]: " LENGUA
+  case "${LENGUA,,}" in en|eng|english|ingles|inglés) LENGUA=en ;; *) LENGUA=es ;; esac
   echo
 
   if preguntar_si "¿Quieres usar el móvil como micrófono y mando a distancia?" s; then
@@ -152,7 +163,8 @@ if [ "$MODO" = "instalación nueva" ]; then
 
   azul "-- Resumen --"
   echo "   Destino        : $DESTINO"
-  echo "   Móvil / remoto : $([ $QUIERE_REMOTO = 1 ] && echo "sí (usuario: $USUARIO)" || echo no)"
+  echo "   Lengua materna : $([ "$LENGUA" = en ] && echo "inglés" || echo "español")"
+  echo "   Móvil / remoto :$([ $QUIERE_REMOTO = 1 ] && echo "sí (usuario: $USUARIO)" || echo no)"
   echo "   Santo y seña   : $([ $QUIERE_VOZ = 1 ] && echo "sí -- \"$FRASE_LOGIN\"" || echo no)"
   echo "   Voz            : $GENERO_VOZ"
   echo
@@ -253,11 +265,28 @@ if command -v ydotool >/dev/null; then
        (o a mano:      ydotoold &)"
   fi
 fi
-if command -v kdotool >/dev/null; then ok "kdotool"
+# kdotool no está en los repositorios. Se busca también donde lo dejan el
+# binario bajado a mano (~/.local/bin) y cargo (~/.cargo/bin), que no
+# siempre están en el PATH: la app los busca ahí (keyboard_keys.find_kdotool).
+KDOTOOL="$(command -v kdotool 2>/dev/null)"
+for c in /usr/local/bin/kdotool "$HOME/.local/bin/kdotool" "$HOME/.cargo/bin/kdotool"; do
+  [ -z "$KDOTOOL" ] && [ -x "$c" ] && KDOTOOL="$c"
+done
+if [ -n "$KDOTOOL" ]; then ok "kdotool ($KDOTOOL)"
 else
-  avi "kdotool no está: los comandos de ventana (minimiza/maximiza) no funcionarán."
-  echo "       Se instala con cargo:  cargo install kdotool"
-  [ "${ES_ARM:-0}" = "1" ] && echo "       En ARM tarda bastante en compilar, pero funciona."
+  avi "kdotool no está: los comandos de ventana (minimiza, maximiza, trae, foco) no funcionarán."
+  if [ "${ES_ARM:-0}" = "1" ]; then
+    echo "       Se instala con cargo:  cargo install kdotool"
+    echo "       En ARM tarda bastante en compilar, pero funciona."
+  else
+    # El binario ya hecho y no `cargo install`: compilarlo pide el Rust de
+    # una versión más nueva de la que trae Debian 13, y falla (probado el
+    # 14-sep-2026 con la 0.2.3 y la 0.3.0). La 0.2.3 es la probada.
+    echo "       No está en los repositorios. Lo más sencillo es el binario ya hecho:"
+    echo "         curl -L -o /tmp/kdotool.tar.gz https://github.com/jinliu/kdotool/releases/download/v0.2.3/kdotool-0.2.3-x86_64-unknown-linux-gnu.tar.gz"
+    echo "         mkdir -p /tmp/kdotool ~/.local/bin && tar -xzf /tmp/kdotool.tar.gz -C /tmp/kdotool"
+    echo "         install -m 755 \"\$(find /tmp/kdotool -type f -name kdotool | head -1)\" ~/.local/bin/"
+  fi
 fi
 if [ ${#FALTAN[@]} -gt 0 ]; then
   echo
@@ -354,10 +383,10 @@ instalar_requisitos() {
 
 ./venv/bin/pip install -q --upgrade pip >/dev/null 2>&1
 if [ "$ES_ARM" = "1" ]; then
-  # En ARM se instala todo MENOS PySide6 y pyaudio, que vienen del sistema:
-  # pip intentaría compilarlos y en una Raspberry eso son horas, si termina.
-  grep -viE "^(PySide6|pyaudio)" requirements.txt > /tmp/req_arm.txt
-  instalar_requisitos /tmp/req_arm.txt "requirements (sin PySide6 ni pyaudio: los pone el sistema)"
+  # En ARM se instala todo MENOS PySide6, que viene del sistema: pip
+  # intentaría compilarlo y en una Raspberry eso son horas, si termina.
+  grep -viE "^PySide6" requirements.txt > /tmp/req_arm.txt
+  instalar_requisitos /tmp/req_arm.txt "requirements (sin PySide6: lo pone el sistema)"
   rm -f /tmp/req_arm.txt
 else
   instalar_requisitos requirements.txt "requirements.txt"
@@ -369,6 +398,13 @@ r = subprocess.run(["./venv/bin/python", "-c", "import PySide6; print(PySide6.__
 sys.exit(0 if r.returncode == 0 else 1)
 PYCHK
 ./venv/bin/pip install -q piper-tts >/dev/null 2>&1 && ok "piper-tts" || avi "piper-tts falló: la voz caerá a espeak-ng"
+
+# La lengua materna: en instalación nueva la ha dicho el cuestionario; al
+# actualizar se lee de SU config_local.py, que es donde vive.
+if [ -z "$LENGUA" ]; then
+  LENGUA="$(./venv/bin/python -c 'import config; print(getattr(config, "LENGUA_MATERNA", "es"))' 2>/dev/null)"
+fi
+[ "$LENGUA" = "en" ] || LENGUA=es
 
 # ---------------------------------------------------------------------------
 # 5. Modelos (grandes: solo si faltan)
@@ -424,21 +460,43 @@ if [ "$SIN_MODELOS" = "0" ]; then
     echo "   descargando $1 ..."
     # -C - reanuda y --retry reintenta: son varios GB, y una descarga
     # que se corta a media hora no puede empezar de cero. El trozo
-    # bajado se conserva en /tmp para poder continuar.
+    # bajado se conserva para poder continuar.
+    #
+    # En la carpeta de modelos y NO en /tmp: en Debian 13 /tmp está en
+    # RAM, así que un zip de 1,8 GB ocupaba memoria, y lo bajado a medias
+    # se perdía al reiniciar (14-sep-2026).
+    local zip="vosk_models/$1.zip"
     curl -# -L -C - --retry 5 --retry-delay 3 \
-         -o "/tmp/$1.zip" "https://alphacephei.com/vosk/models/$1.zip" \
-      && comprobar_zip "/tmp/$1.zip" \
-      && unzip -q -o "/tmp/$1.zip" -d vosk_models && rm -f "/tmp/$1.zip" \
+         -o "$zip" "https://alphacephei.com/vosk/models/$1.zip" \
+      && comprobar_zip "$zip" \
+      && unzip -q -o "$zip" -d vosk_models && rm -f "$zip" \
       && comprobar_modelo "vosk_models/$1" && ok "$1" \
-      || err "no se pudo descargar $1 (lo bajado se conserva en /tmp/$1.zip)"
+      || err "no se pudo descargar $1 (lo bajado se conserva en $zip)"
   }
-  bajar_vosk vosk-model-es-0.42
-  bajar_vosk vosk-model-en-us-0.42
-  bajar_vosk vosk-model-spk-0.4
-  if ls piper_voices/*.onnx >/dev/null 2>&1; then ok "voz de Piper (ya estaba)"
+  # El grande de la lengua materna y el pequeño de la otra: con los dos
+  # grandes la app pide 10 GB de RAM; así, 3,5 GB (medido el 5-sep-2026,
+  # ver config.py). Si el pequeño faltara, la app cargaría el grande de la
+  # otra lengua sin avisar, y la RAM volvería a dispararse.
+  if [ "$LENGUA" = "en" ]; then
+    bajar_vosk vosk-model-en-us-0.42
+    VOZ_PIPER="en_US-lessac-medium"
   else
-    ./venv/bin/python -m piper.download_voices es_ES-sharvard-medium \
-        --download-dir piper_voices >/dev/null 2>&1 && ok "voz es_ES-sharvard-medium" \
+    bajar_vosk vosk-model-es-0.42
+    VOZ_PIPER="es_ES-sharvard-medium"
+  fi
+  # Los DOS pequeños, siempre: el de la otra lengua es el que caza sus
+  # órdenes, y el de la tuya lo usa la calibración de voz (154 MB en vez de
+  # los 4,3 GB del grande; ver tools/speaker_calibration.py). Sin el de la
+  # tuya, la calibración cogía el de la otra y "oía" en inglés (14-sep-2026).
+  bajar_vosk vosk-model-small-es-0.42
+  bajar_vosk vosk-model-small-en-us-0.15
+  bajar_vosk vosk-model-spk-0.4
+  # La voz de SU lengua (config.TTS_PIPER_VOICES): una voz española leyendo
+  # inglés no se entiende. Antes bastaba con que hubiera una .onnx cualquiera.
+  if [ -f "piper_voices/$VOZ_PIPER.onnx" ]; then ok "voz $VOZ_PIPER (ya estaba)"
+  else
+    ./venv/bin/python -m piper.download_voices "$VOZ_PIPER" \
+        --download-dir piper_voices >/dev/null 2>&1 && ok "voz $VOZ_PIPER" \
       || avi "no se pudo bajar la voz de Piper"
   fi
 fi
@@ -492,6 +550,10 @@ PY
     if [ -n "$NOMBRE_MIC" ]; then echo "INPUT_DEVICE = \"$NOMBRE_MIC\""; elif [ -n "$MIC" ]; then echo "INPUT_DEVICE = $MIC"; else echo "INPUT_DEVICE = None"; fi
     echo
     echo "TTS_VOICE_GENDER = \"${GENERO_VOZ:-femenina}\""
+    echo
+    echo "# Tu lengua materna (\"es\" | \"en\"). Para cambiarla, cámbiala aquí y"
+    echo "# vuelve a pasar el instalador: baja los modelos que le tocan."
+    echo "LENGUA_MATERNA = \"$LENGUA\""
     echo
     if [ "$QUIERE_VOZ" = "1" ]; then
       echo "VOICE_LOGIN_ENABLED = True"

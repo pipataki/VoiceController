@@ -129,22 +129,70 @@ AMBIENT_SECONDS = 90.0
 def _beep(freq=880.0, dur=0.18, volume=0.25):
     """Pitido corto para marcar principio y fin de cada grabación -- la
     herramienta es manos libres, así que el usuario necesita oír cuándo
-    se está grabando sin mirar la pantalla."""
-    try:
-        rate = 44100
-        t = np.linspace(0, dur, int(rate * dur), endpoint=False)
-        # envolvente suave, para que no chasquee
-        env = np.minimum(1.0, np.minimum(t, dur - t) / 0.02)
-        sd.play((volume * env * np.sin(2 * np.pi * freq * t)).astype(np.float32), rate)
-        sd.wait()
-    except Exception:
-        pass  # sin altavoz tampoco pasa nada: los avisos también van por pantalla
+    se está grabando sin mirar la pantalla.
+
+    Un pitido NUNCA puede parar la calibración. Si la salida de sonido no
+    avanza (pasó el 14-sep-2026 en una VM cuya salida no llegaba a ningún
+    sitio), tanto sd.wait() como sd.stop() esperan a que se vacíe, y eso no
+    pasa nunca: se quedaba colgada en el primer pitido sin decir nada. Por
+    eso se corta con abort(), que no espera, y todo va en un hilo aparte
+    con tiempo máximo: si aun así se atasca, se sigue sin él."""
+    import threading
+
+    def _sonar():
+        try:
+            rate = 44100
+            t = np.linspace(0, dur, int(rate * dur), endpoint=False)
+            # envolvente suave, para que no chasquee
+            env = np.minimum(1.0, np.minimum(t, dur - t) / 0.02)
+            sd.play((volume * env * np.sin(2 * np.pi * freq * t)).astype(np.float32), rate)
+            time.sleep(dur + 0.3)
+            sd.get_stream().abort(ignore_errors=True)
+        except Exception:
+            pass  # sin altavoz tampoco pasa nada: los avisos también van por pantalla
+
+    hilo = threading.Thread(target=_sonar, daemon=True)
+    hilo.start()
+    hilo.join(dur + 1.0)
 
 
 def _countdown(seconds=3):
     for n in range(seconds, 0, -1):
         print(f"    {n}...", flush=True)
         time.sleep(1.0)
+
+
+def _modelo_de_idioma() -> str:
+    """El modelo de idioma que acompaña al de locutor: el PEQUEÑO si lo hay.
+
+    Aquí el modelo de idioma solo hace de acompañante: la voz la resume el
+    modelo de locutor. Y el grande costaba caro: 4.270 MB de pico, y en una
+    Debian limpia de 6 GB con KDE el sistema mató la calibración a media
+    instalación (14-sep-2026).
+
+    Medido ese día con cinco voces sintéticas y 55 frases: el perfil hecho con
+    el pequeño y con el grande sale IDÉNTICO (coseno 1,000), y ese perfil,
+    usado luego con el grande de la aplicación, puntúa como mucho 0,004
+    distinto. Puntuar frases sueltas con el pequeño se desvía algo más (unas
+    centésimas), lo que mueve un poco el umbral que se propone.
+
+    Orden: el pequeño de la lengua materna, el grande de la materna, y solo
+    si no hay ninguno de los dos, los de la otra lengua -- nunca quedarse sin
+    calibrar por eso. La otra lengua va al final a propósito: con el pequeño
+    de inglés, lo que "oía" la calibración salía en inglés (14-sep-2026, la
+    VM no tenía el pequeño de español), y el perfil se habría hecho con un
+    modelo que no se ha medido.
+    """
+    import os
+    materna = getattr(config, "LENGUA_MATERNA", "es")
+    otra = "en" if materna == "es" else "es"
+    pequeno = {"es": getattr(config, "VOSK_MODEL_ES_SMALL", ""),
+               "en": getattr(config, "VOSK_MODEL_EN_SMALL", "")}
+    grande = {"es": config.VOSK_MODEL_ES, "en": config.VOSK_MODEL_EN}
+    for ruta in (pequeno[materna], grande[materna], pequeno[otra], grande[otra]):
+        if ruta and os.path.isdir(ruta):
+            return ruta
+    sys.exit("No hay ningún modelo de idioma en vosk_models/: pasa el instalador.")
 
 
 class Listener:
@@ -161,7 +209,7 @@ class Listener:
                      "Descárgalo de https://alphacephei.com/vosk/models/vosk-model-spk-0.4.zip "
                      "y descomprímelo ahí.")
         print("Cargando modelos (tarda unos segundos)...", flush=True)
-        self.model = Model(config.VOSK_MODEL_ES)
+        self.model = Model(_modelo_de_idioma())
         self.spk = SpkModel(str(SPK_MODEL_DIR))
         self.device = config.INPUT_DEVICE if device is None else device
         try:

@@ -5,8 +5,10 @@
 PySide6>=6.0.1
 
 # Audio Capture
+# Solo sounddevice. pyaudio estuvo aqui sin que nada lo importara, y en
+# Linux pip tiene que COMPILARLO (compilador + portaudio19-dev): en una
+# Debian recien instalada eso tiraba el instalador entero (14-sep-2026).
 sounddevice>=0.4.6
-pyaudio>=0.2.13
 
 # Voice Recognition (Offline)
 vosk>=0.3.45
@@ -24,9 +26,7 @@ requests>=2.31.0
 # Input Control
 python-ydotool>=0.0.7
 
-# Development (opcional)
-pytest>=7.4.0
-black>=23.0.0
-flake8>=6.0.0
+# Las herramientas de desarrollo (pytest, black, flake8...) estan en
+# requirements-dev.txt: al usuario no le sirven de nada.
 
 numpy>=2.0.0

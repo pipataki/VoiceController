@@ -14,8 +14,11 @@ Software libre, licencia **LGPLv3**. La versión está en `version.py`
 
 - **Linux con KDE Plasma** (Wayland o X11) o **Windows 10/11**.
 - Un micrófono. Vale el del portátil, aunque uno decente se nota.
-- Unos **4 GB de disco** para el modelo de voz español, o unos 11 GB si
-  quieres además el inglés grande.
+- **Memoria**: el modelo de voz grande de tu lengua ocupa unos 3,4 GB con
+  el español y 6,7 GB con el inglés. Cuenta con un equipo de **8 GB** con
+  el español, y de 16 GB con el inglés.
+- Unos **4 GB de disco** con el español de lengua materna, o unos 6 GB con
+  el inglés.
 - En Linux, tres programas del sistema que el instalador comprueba y te dice
   cómo poner si faltan: `ydotool` (mover el ratón y teclear), `kdotool`
   (manejar ventanas) y `spectacle` (capturar la pantalla).
@@ -39,10 +42,11 @@ ajustes (`config_local.py`), ni tus comandos (`commands.json`, que se
 voz, ni los certificados de la webapp. Los modelos grandes solo se descargan
 si faltan.
 
-Si tienes los modelos descargados de antes, déjalos en `modelos_offline/`
-dentro de la carpeta descomprimida y los usará sin bajar nada.
+En Windows, si tienes los modelos descargados de antes, deja sus `.zip` en
+`modelos_offline/` dentro de la carpeta descomprimida y los usará sin bajar
+nada.
 
-Al terminar te pregunta lo poco que necesita saber: qué micrófono, si
+Te pregunta lo poco que necesita saber: en Linux, tu lengua materna; qué micrófono, si
 prefieres voz femenina o masculina, y si quieres activar el santo y seña
 (que hace que solo obedezca a tu voz).
 
@@ -158,6 +162,10 @@ EXTENSIONES_HABLADAS = {"maqueta": "kra", "partitura": "mscz"}
 el modelo grande, dicta y entiende los números; la otra solo caza comandos,
 con un modelo pequeño. No es un idioma "peor": es que reconocer dictado
 libre cuesta 3,4 GB de memoria y cazar órdenes sueltas cuesta 155 MB.
+
+En Linux el instalador te la pregunta y baja los modelos que tocan. Para
+cambiarla, cámbiala en `config_local.py` y vuelve a pasar el instalador: bajará
+el grande de la nueva. En Windows el instalador pone el español, por ahora.
 
 ---
 

@@ -398,7 +398,7 @@ def poner_ventana_encima(titulo: str, encima: bool = True) -> bool:
     import sys as _sys
     if _sys.platform.startswith("win"):
         return _poner_encima_windows(titulo, encima)
-    binario = shutil.which("kdotool")
+    binario = keyboard_keys.find_kdotool()
     if not binario:
         return False
     try:
@@ -438,7 +438,7 @@ def window_action(kind: str) -> bool:
     if cmd is None:
         print(f"[actions] acción de ventana no reconocida: {kind!r}")
         return False
-    kdotool = shutil.which("kdotool")
+    kdotool = keyboard_keys.find_kdotool()
     if not kdotool:
         print("[actions] kdotool no está instalado: no se pueden manejar ventanas")
         return False
@@ -492,7 +492,7 @@ _ventana_destino = None                   # la ultima ventana AJENA que estuvo a
 
 
 def _nombre_de(ventana: str) -> str:
-    kdotool = shutil.which("kdotool")
+    kdotool = keyboard_keys.find_kdotool()
     if not kdotool or not ventana:
         return ""
     try:
@@ -505,7 +505,7 @@ def _nombre_de(ventana: str) -> str:
 
 def ventana_activa_ajena():
     """Id de la ventana activa si NO es una nuestra; None en otro caso."""
-    kdotool = shutil.which("kdotool")
+    kdotool = keyboard_keys.find_kdotool()
     if not kdotool:
         return None
     try:
@@ -552,7 +552,7 @@ def asegurar_ventana_destino() -> bool:
         print("[actions] el foco esta en una ventana de VoiceController y no "
               "hay ninguna recordada: el texto puede perderse")
         return False
-    kdotool = shutil.which("kdotool")
+    kdotool = keyboard_keys.find_kdotool()
     if not kdotool:
         return False
     try:
@@ -581,7 +581,7 @@ def minimize_active_window() -> bool:
     Devuelve True si se pudo LANZAR kdotool sin error (no garantiza
     que hubiera una ventana activa que minimizar); False si kdotool no
     está instalado o falló al lanzarse."""
-    binary = shutil.which("kdotool")
+    binary = keyboard_keys.find_kdotool()
     if not binary:
         print("[actions] kdotool no encontrado en PATH -- no se puede "
               "minimizar la ventana activa (ver activate_window_by_name "
@@ -621,9 +621,10 @@ def activate_window_by_name(name: str, permitir_propia: bool = False) -> bool:
 
     kdotool SÍ sirve para esto en Plasma 6/Wayland: genera un script de
     KWin al vuelo y lo ejecuta a través de la interfaz D-Bus de KWin.
-    Instalación: `cargo install kdotool` (necesita Rust/cargo), o
-    descargar el binario ya compilado desde
-    https://github.com/jinliu/kdotool/releases
+    Instalación: el binario ya compilado de
+    https://github.com/jinliu/kdotool/releases (install.sh dice cómo); con
+    el Rust de Debian 13 `cargo install kdotool` no compila. Se busca
+    también fuera del PATH: keyboard_keys.find_kdotool().
 
     Usada tanto por activate_target_window() (config.PASTE_TARGET_WINDOW_REGEX,
     fijo) como por command_router._try_parse_bring_window() (comando de
@@ -640,12 +641,12 @@ def activate_window_by_name(name: str, permitir_propia: bool = False) -> bool:
     if _sys.platform.startswith("win"):
         import backends
         return backends.get().activate_window(name)
-    binary = shutil.which("kdotool")
+    binary = keyboard_keys.find_kdotool()
     if not binary:
-        print("[actions] kdotool no encontrado en PATH -- instálalo con "
-              "`cargo install kdotool` o descarga el binario desde "
-              "https://github.com/jinliu/kdotool/releases para poder "
-              "activar ventanas por nombre (kstart ya no sirve para esto en KF6)")
+        print("[actions] kdotool no encontrado -- descarga el binario desde "
+              "https://github.com/jinliu/kdotool/releases a ~/.local/bin "
+              "para poder activar ventanas por nombre (kstart ya no sirve "
+              "para esto en KF6)")
         return False
     # NADA de anteponer "(?i)": el script que genera kdotool es
     # JAVASCRIPT (motor de scripting de KWin), no Rust/PCRE -- "(?i)" no

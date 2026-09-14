@@ -33,8 +33,10 @@ def available():
     la aplicación inútil y lo que solo quita funciones: sin `ydotool` no
     se escribe NADA; sin `kdotool` solo se pierden los comandos de
     ventana."""
-    faltan = [c for c in ("ydotool",) if not shutil.which(c)]
-    opcionales = [c for c in ("kdotool", "spectacle") if not shutil.which(c)]
+    import keyboard_keys
+    faltan = [] if keyboard_keys.find_ydotool() else ["ydotool"]
+    opcionales = ([] if keyboard_keys.find_kdotool() else ["kdotool"]) + \
+                 ([] if shutil.which("spectacle") else ["spectacle"])
     if faltan:
         return False, f"falta {', '.join(faltan)} (sin él no se escribe ni una tecla)"
     if opcionales:
@@ -226,12 +228,13 @@ _ULTIMA_AJENA = None          # geometria de la ultima ventana que NO era la nue
 
 
 def _kdotool(*args) -> str:
-    import shutil
     import subprocess
-    if shutil.which("kdotool") is None:
+    import keyboard_keys
+    binario = keyboard_keys.find_kdotool()
+    if binario is None:
         return ""
     try:
-        r = subprocess.run(["kdotool", *args], capture_output=True,
+        r = subprocess.run([binario, *args], capture_output=True,
                            text=True, timeout=5)
         if r.returncode == 0:
             return r.stdout

@@ -58,17 +58,38 @@ _YDOTOOL_FALLBACK_PATHS = [
 ]
 
 
-def find_ydotool() -> str | None:
-    """Ruta al binario `ydotool`: primero el PATH actual (se recalcula
-    en cada llamada por si el entorno cambia), luego
-    _YDOTOOL_FALLBACK_PATHS. None si no aparece en ningún sitio."""
-    found = shutil.which("ydotool")
+def _buscar_binario(nombre: str, rutas) -> str | None:
+    """Primero el PATH actual (se recalcula en cada llamada por si el
+    entorno cambia), luego las rutas dadas. None si no está en ninguna."""
+    found = shutil.which(nombre)
     if found:
         return found
-    for candidate in _YDOTOOL_FALLBACK_PATHS:
+    for candidate in rutas:
         if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
             return candidate
     return None
+
+
+def find_ydotool() -> str | None:
+    """Ruta al binario `ydotool`, o None si no aparece en ningún sitio."""
+    return _buscar_binario("ydotool", _YDOTOOL_FALLBACK_PATHS)
+
+
+# kdotool NO está en los repositorios de Debian: se instala con `cargo
+# install kdotool` (queda en ~/.cargo/bin) o bajando el binario (lo normal
+# es ~/.local/bin o /usr/local/bin). Ninguna de las dos rutas de usuario
+# está en el PATH de un lanzador del escritorio, y sin esta búsqueda la app
+# decía "kdotool no está instalado" con kdotool instalado.
+_KDOTOOL_FALLBACK_PATHS = [
+    "/usr/local/bin/kdotool",
+    os.path.expanduser("~/.local/bin/kdotool"),
+    os.path.expanduser("~/.cargo/bin/kdotool"),
+]
+
+
+def find_kdotool() -> str | None:
+    """Ruta al binario `kdotool`, o None si no aparece en ningún sitio."""
+    return _buscar_binario("kdotool", _KDOTOOL_FALLBACK_PATHS)
 
 
 # Códigos evdev (linux/input-event-codes.h). Las claves se comparan en
