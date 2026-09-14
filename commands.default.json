@@ -1,0 +1,1521 @@
+{
+  "_comentario": "Configuración completa de VoiceController con soporte para input_action y acciones de teclado.",
+  "vc_trigger": {
+    "_comentario": "LEGACY: palabra que marca el inicio de un comando del tablero en el formato antiguo posicion <celda> <subcelda> <accion>.",
+    "aliases": [
+      "posicion",
+      "vc"
+    ]
+  },
+  "control_words": {
+    "_comentario": "control_words con scope. Ahora soporta action: keyboard:shortcut_name para atajos predefinidos.",
+    "_comentario_ayuda": "El campo opcional 'help' es lo que hace que un comando aparezca en la ventana de ayuda que abre 'ayuda'/'help' (scope any: funciona igual en idle que dictando, y lista solo los comandos del estado en el que estes). Quita el 'help' de una entrada para que no salga; anadeselo a cualquier otra para que si salga.",
+    "ayuda": {
+      "action": "show_help",
+      "aliases": [
+        "ayuda",
+        "help",
+        "socorro",
+        "que puedo decir",
+        "qué puedo decir"
+      ],
+      "scope": "any",
+      "help": "esta misma ventana: qué puedes decir aquí",
+      "help_en": "this very window: what you can say here",
+      "alias_en": "help"
+    },
+    "ayuda_audio": {
+      "action": "show_help_audio",
+      "aliases": [
+        "ayuda audio",
+        "ayuda con audio",
+        "ayuda en voz alta",
+        "help audio",
+        "leeme la ayuda"
+      ],
+      "scope": "any",
+      "help": "la ayuda, además leída en voz alta",
+      "help_en": "the help, also read out loud",
+      "alias_en": "help audio"
+    },
+    "codigo_emparejamiento": {
+      "action": "pairing_code",
+      "aliases": [
+        "codigo de emparejamiento",
+        "código de emparejamiento",
+        "codigo del movil",
+        "código del móvil",
+        "emparejar movil",
+        "emparejar móvil",
+        "empareja movil",
+        "empareja móvil"
+      ],
+      "scope": "any",
+      "help": "dice el código para emparejar el móvil con este ordenador",
+      "help_en": "says the code to pair the phone with this computer"
+    },
+    "foco": {
+      "action": "board_focus",
+      "aliases": [
+        "foco",
+        "focus",
+        "enfoca",
+        "enfocar",
+        "ventana activa"
+      ],
+      "scope": "any",
+      "help": "enseña la ventana en la que estabas trabajando",
+      "help_en": "shows the window you were working on",
+      "alias_en": "focus"
+    },
+    "standby": {
+      "action": "standby",
+      "aliases": [
+        "standby",
+        "duerme",
+        "en espera",
+        "pausa"
+      ],
+      "scope": "any",
+      "help": "deja de escuchar hasta que digas tu santo y seña. También se pone en espera sola si pasa un rato sin usarse",
+      "help_en": "stops listening until you say your passphrase. It also goes into standby by itself after a while unused",
+      "alias_en": "standby"
+    },
+    "dictar": {
+      "action": "start_dictation",
+      "aliases": [
+        "dictar",
+        "type",
+        "dicta"
+      ],
+      "scope": "idle",
+      "help": "pasa a modo dictado (escribir texto por voz)",
+      "help_en": "switches to typing mode (writing text by voice)",
+      "alias_en": "type"
+    },
+    "deletrear": {
+      "action": "start_formuling",
+      "aliases": [
+        "deletrear",
+        "develope",
+        "desarrollo",
+        "formule",
+        "fórmula",
+        "math",
+        "matemática",
+        "deletrea"
+      ],
+      "scope": "idle",
+      "help": "modo fórmula/matemáticas, letra a letra",
+      "help_en": "formula/maths mode, letter by letter",
+      "alias_en": "math"
+    },
+    "cerrar_idle": {
+      "action": "quit",
+      "aliases": [
+        "cerrar",
+        "exit",
+        "close",
+        "cierra"
+      ],
+      "scope": "any",
+      "help": "cierra VoiceController",
+      "help_en": "closes VoiceController",
+      "alias_en": "close",
+      "aliases_retirados": [
+        "fin"
+      ]
+    },
+    "subir_gui": {
+      "action": "raise_gui",
+      "aliases": [
+        "subir",
+        "raise",
+        "sube"
+      ],
+      "scope": "any",
+      "help": "trae la ventana de VoiceController al frente",
+      "help_en": "brings the VoiceController window to the front",
+      "alias_en": "raise"
+    },
+    "confirmar": {
+      "action": "confirm",
+      "aliases": [
+        "entra",
+        "enter",
+        "okey",
+        "ok",
+        "oquei",
+        "okei",
+        "yes"
+      ],
+      "scope": "dictating",
+      "help": "confirma lo dictado y lo escribe en la app de destino",
+      "help_en": "confirms what you dictated and writes it into the target app",
+      "alias_en": "enter"
+    },
+    "borrar_texto": {
+      "action": "reset",
+      "aliases": [
+        "borra",
+        "reset",
+        "erase",
+        "cleaning",
+        "borrar"
+      ],
+      "scope": "dictating",
+      "help": "borra el Pre-Texto y empieza de cero",
+      "help_en": "clears the Pre-Text and starts over",
+      "alias_en": "reset"
+    },
+    "corregir_palabra": {
+      "action": "correct_last_word",
+      "aliases": [
+        "corrige",
+        "corregir",
+        "correct",
+        "fix"
+      ],
+      "scope": "dictating",
+      "help": "corrige una palabra: 'corrige <nº> <mayúscula/siglas/cifras...>'",
+      "help_en": "corrects a word: 'correct <no.> <capital/initials/digits...>'",
+      "alias_en": "correct"
+    },
+    "aplicar_sugerencia": {
+      "action": "apply_suggestion",
+      "aliases": [
+        "vale"
+      ],
+      "scope": "dictating",
+      "help": "acepta la sugerencia que aparece abajo",
+      "help_en": "accepts the suggestion shown below"
+    },
+    "volver_idle": {
+      "action": "go_idle",
+      "aliases": [
+        "idle",
+        "listen",
+        "escucha",
+        "oye",
+        "idel",
+        "lisen"
+      ],
+      "scope": "dictating",
+      "help": "vuelve a modo escucha sin confirmar",
+      "help_en": "back to listening mode without confirming",
+      "alias_en": "listen"
+    },
+    "_comentario_keyboard": "Atajos de teclado predefinidos (requiere input_action)",
+    "copiar": {
+      "action": "keyboard:copy",
+      "aliases": [
+        "copiar",
+        "copy",
+        "copia"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+C",
+      "help_en": "Ctrl+C",
+      "alias_en": "copy"
+    },
+    "pegar": {
+      "action": "keyboard:paste",
+      "aliases": [
+        "pegar",
+        "paste",
+        "pega"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+V",
+      "help_en": "Ctrl+V",
+      "alias_en": "paste"
+    },
+    "cortar": {
+      "action": "keyboard:cut",
+      "aliases": [
+        "cortar",
+        "cut",
+        "corta"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+X",
+      "help_en": "Ctrl+X",
+      "alias_en": "cut"
+    },
+    "seleccionar_todo": {
+      "action": "keyboard:select_all",
+      "aliases": [
+        "seleccionar todo",
+        "select all",
+        "todo",
+        "selecciona todo"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+A",
+      "help_en": "Ctrl+A",
+      "alias_en": "select all"
+    },
+    "deshacer": {
+      "action": "keyboard:undo",
+      "aliases": [
+        "deshacer",
+        "undo",
+        "deshaz"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+Z",
+      "help_en": "Ctrl+Z",
+      "alias_en": "undo"
+    },
+    "rehacer": {
+      "action": "keyboard:redo",
+      "aliases": [
+        "rehacer",
+        "redo",
+        "rehaz"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+Mayús+Z: rehace lo que se deshizo",
+      "help_en": "Ctrl+Shift+Z: redo",
+      "alias_en": "redo"
+    },
+    "guardar": {
+      "action": "keyboard:save",
+      "aliases": [
+        "guardar",
+        "save",
+        "guarda"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+S",
+      "help_en": "Ctrl+S",
+      "alias_en": "save"
+    },
+    "abrir": {
+      "action": "keyboard:open",
+      "aliases": [
+        "abrir",
+        "open",
+        "abre"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+O: abrir un archivo",
+      "help_en": "Ctrl+O: open a file",
+      "alias_en": "open"
+    },
+    "cerrar_ventana": {
+      "action": "keyboard:close",
+      "aliases": [
+        "cerrar ventana",
+        "close window",
+        "cierra la pestana",
+        "cerrar pestana",
+        "cierra pestana"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+W: cierra la pestaña o el documento",
+      "help_en": "Ctrl+W: closes the tab or document",
+      "alias_en": "close window"
+    },
+    "salir": {
+      "action": "keyboard:quit",
+      "aliases": [
+        "salir",
+        "quit",
+        "exit app"
+      ],
+      "scope": "idle",
+      "help": "Alt+F4: cierra el programa que tienes delante",
+      "help_en": "Alt+F4: closes the program in front",
+      "alias_en": "quit"
+    },
+    "buscar": {
+      "action": "keyboard:find",
+      "aliases": [
+        "buscar",
+        "find",
+        "búsqueda",
+        "busca"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+F",
+      "help_en": "Ctrl+F",
+      "alias_en": "find"
+    },
+    "reemplazar": {
+      "action": "keyboard:replace",
+      "aliases": [
+        "reemplazar",
+        "replace",
+        "reemplaza"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+H: buscar y reemplazar (en Kate, Ctrl+R)",
+      "help_en": "Ctrl+H: find and replace (Ctrl+R in Kate)",
+      "alias_en": "replace"
+    },
+    "eliminar": {
+      "action": "keyboard:delete",
+      "aliases": [
+        "eliminar",
+        "delete",
+        "elimina"
+      ],
+      "scope": "idle",
+      "help": "tecla Supr",
+      "help_en": "Delete key",
+      "alias_en": "delete"
+    },
+    "retroceso": {
+      "action": "keyboard:backspace",
+      "aliases": [
+        "retroceso",
+        "backspace",
+        "atrás"
+      ],
+      "scope": "idle",
+      "help": "tecla Retroceso",
+      "help_en": "Backspace key",
+      "alias_en": "backspace"
+    },
+    "tab": {
+      "action": "keyboard:tab",
+      "aliases": [
+        "tab",
+        "tabulador",
+        "tabulacion",
+        "tabulación"
+      ],
+      "scope": "idle",
+      "help": "tecla Tabulador",
+      "help_en": "Tab key",
+      "alias_en": "tab"
+    },
+    "enter": {
+      "action": "keyboard:enter",
+      "aliases": [
+        "enter",
+        "intro",
+        "entrar",
+        "retorno"
+      ],
+      "scope": "idle",
+      "help": "tecla Intro",
+      "help_en": "Enter key",
+      "alias_en": "enter"
+    },
+    "escape": {
+      "action": "keyboard:escape",
+      "aliases": [
+        "escape",
+        "esc",
+        "escapar",
+        "escapa"
+      ],
+      "scope": "idle",
+      "help": "tecla Escape",
+      "help_en": "Escape key",
+      "alias_en": "escape"
+    },
+    "inicio": {
+      "action": "keyboard:home",
+      "aliases": [
+        "inicio",
+        "home"
+      ],
+      "scope": "idle",
+      "help": "tecla Inicio",
+      "help_en": "Home key",
+      "alias_en": "home"
+    },
+    "fin": {
+      "action": "keyboard:end",
+      "aliases": [
+        "fin",
+        "final",
+        "end",
+        "fin de linea"
+      ],
+      "scope": "idle",
+      "help": "tecla Fin",
+      "help_en": "End key",
+      "alias_en": "end"
+    },
+    "pagina_arriba": {
+      "action": "keyboard:page_up",
+      "aliases": [
+        "página arriba",
+        "page up"
+      ],
+      "scope": "idle",
+      "help": "tecla RePág",
+      "help_en": "Page Up key",
+      "alias_en": "page up"
+    },
+    "pagina_abajo": {
+      "action": "keyboard:page_down",
+      "aliases": [
+        "página abajo",
+        "page down"
+      ],
+      "scope": "idle",
+      "help": "tecla AvPág",
+      "help_en": "Page Down key",
+      "alias_en": "page down"
+    },
+    "arriba": {
+      "action": "keyboard:up",
+      "aliases": [
+        "arriba",
+        "up"
+      ],
+      "scope": "idle",
+      "help": "flecha arriba",
+      "help_en": "up arrow",
+      "alias_en": "up"
+    },
+    "abajo": {
+      "action": "keyboard:down",
+      "aliases": [
+        "abajo",
+        "down"
+      ],
+      "scope": "idle",
+      "help": "flecha abajo",
+      "help_en": "down arrow",
+      "alias_en": "down"
+    },
+    "izquierda": {
+      "action": "keyboard:left",
+      "aliases": [
+        "izquierda",
+        "left"
+      ],
+      "scope": "idle",
+      "help": "flecha izquierda",
+      "help_en": "left arrow",
+      "alias_en": "left"
+    },
+    "derecha": {
+      "action": "keyboard:right",
+      "aliases": [
+        "derecha",
+        "right"
+      ],
+      "scope": "idle",
+      "help": "flecha derecha",
+      "help_en": "right arrow",
+      "alias_en": "right"
+    },
+    "_comentario_special_keys": "Teclas especiales del teclado disponibles en modo escucha (idle). Se disparan solas, sin pasar por 'dictar' ni por confirmacion. Anade/edita los 'aliases' para personalizarlas. OJO con chocar con un alias de scope 'any' (p.ej. 'fin' ya es 'cerrar'): los de scope 'any' se comprueban ANTES y ganan siempre.",
+    "espacio": {
+      "action": "keyboard:space",
+      "aliases": [
+        "espacio",
+        "space",
+        "barra espaciadora",
+        "barra"
+      ],
+      "scope": "idle",
+      "help": "barra espaciadora",
+      "help_en": "space bar",
+      "alias_en": "space"
+    },
+    "insertar": {
+      "action": "keyboard:insert",
+      "aliases": [
+        "insertar",
+        "insert",
+        "inserta"
+      ],
+      "scope": "idle",
+      "help": "tecla Insert",
+      "help_en": "Insert key",
+      "alias_en": "insert"
+    },
+    "tabulador_atras": {
+      "action": "keyboard:shift_tab",
+      "aliases": [
+        "tabulador atras",
+        "tabulador atrás",
+        "tab atras",
+        "shift tab",
+        "back tab"
+      ],
+      "scope": "idle",
+      "help": "Mayús+Tabulador (campo anterior)",
+      "help_en": "Shift+Tab (previous field)",
+      "alias_en": "back tab"
+    },
+    "scroll_arriba": {
+      "action": "keyboard:scroll_up",
+      "aliases": [
+        "scroll arriba",
+        "scroll up",
+        "desplazar arriba",
+        "sube pagina",
+        "desplaza arriba"
+      ],
+      "scope": "idle",
+      "help": "desplaza la vista hacia arriba",
+      "help_en": "scrolls the view up",
+      "alias_en": "scroll up"
+    },
+    "scroll_abajo": {
+      "action": "keyboard:scroll_down",
+      "aliases": [
+        "scroll abajo",
+        "scroll down",
+        "desplazar abajo",
+        "baja pagina",
+        "desplaza abajo"
+      ],
+      "scope": "idle",
+      "help": "desplaza la vista hacia abajo",
+      "help_en": "scrolls the view down",
+      "alias_en": "scroll down"
+    },
+    "scroll_izquierda": {
+      "action": "keyboard:scroll_left",
+      "aliases": [
+        "scroll izquierda",
+        "scroll left",
+        "desplazar izquierda",
+        "desplaza izquierda",
+        "desplaza a la izquierda",
+        "desplaza la izquierda"
+      ],
+      "scope": "idle",
+      "help": "desplaza la vista a la izquierda",
+      "help_en": "scrolls the view left",
+      "alias_en": "scroll left"
+    },
+    "scroll_derecha": {
+      "action": "keyboard:scroll_right",
+      "aliases": [
+        "scroll derecha",
+        "scroll right",
+        "desplazar derecha",
+        "desplaza derecha",
+        "desplaza a la derecha",
+        "desplaza la derecha"
+      ],
+      "scope": "idle",
+      "help": "desplaza la vista a la derecha",
+      "help_en": "scrolls the view right",
+      "alias_en": "scroll right"
+    },
+    "scroll_arriba_una": {
+      "action": "keyboard:up",
+      "aliases": [
+        "desplaza arriba una",
+        "desplazar arriba una",
+        "desplaza arriba uno",
+        "desplazar arriba uno",
+        "scroll up one"
+      ],
+      "scope": "idle",
+      "help": "una sola línea hacia arriba: de uno en uno por un menú. También con una casilla seleccionada",
+      "help_en": "a single line up: one by one through a menu. Also with a square selected",
+      "alias_en": "scroll up one"
+    },
+    "scroll_abajo_una": {
+      "action": "keyboard:down",
+      "aliases": [
+        "desplaza abajo una",
+        "desplazar abajo una",
+        "desplaza abajo uno",
+        "desplazar abajo uno",
+        "scroll down one"
+      ],
+      "scope": "idle",
+      "help": "una sola línea hacia abajo: de uno en uno por un menú. También con una casilla seleccionada",
+      "help_en": "a single line down: one by one through a menu. Also with a square selected",
+      "alias_en": "scroll down one"
+    },
+    "scroll_izquierda_una": {
+      "action": "keyboard:left",
+      "aliases": [
+        "desplaza izquierda una",
+        "desplazar izquierda una",
+        "desplaza a la izquierda una",
+        "desplaza la izquierda una",
+        "desplaza izquierda uno",
+        "desplaza a la izquierda uno",
+        "scroll left one"
+      ],
+      "scope": "idle",
+      "help": "un solo paso a la izquierda: de uno en uno por un menú. También con una casilla seleccionada",
+      "help_en": "a single step left: one by one through a menu. Also with a square selected",
+      "alias_en": "scroll left one"
+    },
+    "scroll_derecha_una": {
+      "action": "keyboard:right",
+      "aliases": [
+        "desplaza derecha una",
+        "desplazar derecha una",
+        "desplaza a la derecha una",
+        "desplaza la derecha una",
+        "desplaza derecha uno",
+        "desplaza a la derecha uno",
+        "scroll right one"
+      ],
+      "scope": "idle",
+      "help": "un solo paso a la derecha: de uno en uno por un menú. También con una casilla seleccionada",
+      "help_en": "a single step right: one by one through a menu. Also with a square selected",
+      "alias_en": "scroll right one"
+    },
+    "mic_local": {
+      "action": "switch_to_local_mic",
+      "aliases": [
+        "micrófono local",
+        "microfono local",
+        "mic local",
+        "local mic"
+      ],
+      "scope": "any",
+      "help": "vuelve al micrófono del PC (tras usar el del móvil)",
+      "help_en": "back to the computer's microphone (after using the phone's)",
+      "alias_en": "local mic"
+    },
+    "_comentario_ventanas": "Acciones sobre la VENTANA QUE TENGA EL FOCO (la de delante), no sobre VoiceController. Van via kdotool (KWin), no por atajo de teclado, porque minimizar/maximizar no tienen atajo estandar. Si la ventana con foco fuera el propio VoiceController, la accion se ignora a proposito.",
+    "minimizar_ventana": {
+      "action": "window:minimize",
+      "aliases": [
+        "minimiza",
+        "minimizar",
+        "minimize",
+        "esconde ventana"
+      ],
+      "scope": "idle",
+      "help": "minimiza la ventana de delante",
+      "help_en": "minimises the window in front",
+      "alias_en": "minimize"
+    },
+    "maximizar_ventana": {
+      "action": "window:maximize",
+      "aliases": [
+        "maximiza",
+        "maximizar",
+        "maximize",
+        "agranda ventana"
+      ],
+      "scope": "idle",
+      "help": "maximiza la ventana de delante",
+      "help_en": "maximises the window in front",
+      "alias_en": "maximize"
+    },
+    "restaurar_ventana": {
+      "action": "window:unmaximize",
+      "aliases": [
+        "restaura",
+        "restaurar",
+        "desmaximiza"
+      ],
+      "scope": "idle",
+      "help": "quita el maximizado de la ventana de delante",
+      "help_en": "unmaximises the window in front"
+    },
+    "pantalla_completa": {
+      "action": "window:fullscreen",
+      "aliases": [
+        "pantalla completa",
+        "fullscreen"
+      ],
+      "scope": "idle",
+      "help": "pantalla completa (conmuta)",
+      "help_en": "full screen (toggles)",
+      "alias_en": "fullscreen"
+    },
+    "cerrar_la_ventana": {
+      "action": "window:close",
+      "aliases": [
+        "cierra ventana",
+        "cerrar la ventana",
+        "close the window",
+        "cierra la ventana",
+        "cierra esta ventana",
+        "cerrar esta ventana"
+      ],
+      "scope": "idle",
+      "help": "cierra la ventana de delante",
+      "help_en": "closes the window in front",
+      "alias_en": "close the window"
+    },
+    "ventana_encima": {
+      "action": "window:above",
+      "aliases": [
+        "siempre encima",
+        "encima de todo"
+      ],
+      "scope": "idle",
+      "help": "mantiene la ventana de delante por encima (conmuta)",
+      "help_en": "keeps the window in front on top (toggles)"
+    },
+    "_comentario_archivos": "Atajos de archivo sobre la aplicacion que tenga el foco. Funcionan en casi cualquier programa porque son los atajos estandar.",
+    "guardar_como": {
+      "action": "keyboard:save_as",
+      "aliases": [
+        "guardar como",
+        "save as",
+        "guarda como"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+Mayús+S",
+      "help_en": "Ctrl+Shift+S",
+      "alias_en": "save as"
+    },
+    "nuevo_archivo": {
+      "action": "keyboard:new_file",
+      "aliases": [
+        "nuevo",
+        "nuevo archivo",
+        "new file"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+N",
+      "help_en": "Ctrl+N",
+      "alias_en": "new file"
+    },
+    "imprimir": {
+      "action": "keyboard:print",
+      "aliases": [
+        "imprimir",
+        "print",
+        "imprime"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+P",
+      "help_en": "Ctrl+P",
+      "alias_en": "print"
+    },
+    "renombrar": {
+      "action": "keyboard:rename",
+      "aliases": [
+        "renombrar",
+        "rename",
+        "renombra"
+      ],
+      "scope": "idle",
+      "help": "F2",
+      "help_en": "F2",
+      "alias_en": "rename"
+    },
+    "actualizar_vista": {
+      "action": "keyboard:refresh",
+      "aliases": [
+        "recarga",
+        "reload"
+      ],
+      "scope": "idle",
+      "help": "F5: recarga la página",
+      "help_en": "F5: reloads the page",
+      "alias_en": "reload",
+      "aliases_retirados": [
+        "actualiza",
+        "refresca",
+        "refresh"
+      ]
+    },
+    "pestana_siguiente": {
+      "action": "keyboard:next_tab",
+      "aliases": [
+        "siguiente pestaña",
+        "pestaña siguiente",
+        "next tab"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+Tab",
+      "help_en": "Ctrl+Tab",
+      "alias_en": "next tab"
+    },
+    "pestana_anterior": {
+      "action": "keyboard:prev_tab",
+      "aliases": [
+        "pestaña anterior",
+        "previous tab"
+      ],
+      "scope": "idle",
+      "help": "Ctrl+Mayús+Tab",
+      "help_en": "Ctrl+Shift+Tab",
+      "alias_en": "previous tab"
+    },
+    "cambiar_ventana": {
+      "action": "keyboard:switch_window",
+      "aliases": [
+        "cambia ventana",
+        "cambiar ventana",
+        "alt tab"
+      ],
+      "scope": "idle",
+      "help": "Alt+Tab",
+      "help_en": "Alt+Tab",
+      "alias_en": "alt tab"
+    },
+    "tablero": {
+      "action": "show_board_grid",
+      "aliases": [
+        "tablero",
+        "casillas",
+        "numeros",
+        "board",
+        "rejilla",
+        "grid"
+      ],
+      "scope": "idle",
+      "help": "vuelve al tablero con las casillas numeradas",
+      "help_en": "back to the board with the numbered squares",
+      "alias_en": "board"
+    },
+    "monitor": {
+      "action": "toggle_monitor",
+      "aliases": [
+        "monitor",
+        "estado",
+        "muestra el estado",
+        "panel"
+      ],
+      "scope": "any",
+      "help": "abre o cierra el panel de estado (solo en modo servicio)",
+      "help_en": "opens or closes the status panel (service mode only)",
+      "alias_en": "monitor"
+    },
+    "seleccion_origen": {
+      "action": "seleccion_origen",
+      "aliases": [
+        "seleccionar",
+        "selecciona",
+        "empieza seleccion",
+        "origen de seleccion",
+        "origen seleccion",
+        "select",
+        "selección",
+        "seleccionar aqui",
+        "marca aqui"
+      ],
+      "scope": "idle",
+      "help": "fija DÓNDE empieza la selección (el punto se pone amarillo); para áreas gráficas, en hueco",
+      "help_en": "sets WHERE the selection starts (the dot turns yellow); for graphic areas, on empty space",
+      "alias_en": "select"
+    },
+    "seleccion_fin": {
+      "action": "seleccion_fin",
+      "aliases": [
+        "fin de la seleccion",
+        "fin de seleccion",
+        "fin seleccion",
+        "termina seleccion",
+        "end of selection",
+        "hasta aqui",
+        "hasta aquí",
+        "tiene la seleccion",
+        "pide la seleccion",
+        "de la seleccion",
+        "fin de la selecion"
+      ],
+      "scope": "idle",
+      "help": "selecciona desde el origen hasta aquí (texto y listas)",
+      "help_en": "selects from the start point to here (text and lists)",
+      "alias_en": "end of selection"
+    },
+    "seleccion_arrastre": {
+      "action": "seleccion_arrastre",
+      "aliases": [
+        "arrastra aqui",
+        "arrastra hasta aqui",
+        "suelta aqui",
+        "drag here",
+        "seleccionar area",
+        "selecciona area",
+        "seleccionar el area",
+        "fin de area",
+        "select area"
+      ],
+      "scope": "idle",
+      "help": "selecciona el área desde el origen hasta aquí (iconos, dibujos) — el ORIGEN debe caer en hueco",
+      "help_en": "selects the area from the start point to here (icons, drawings) — the START must be on empty space",
+      "alias_en": "select area"
+    },
+    "seleccion_cancelar": {
+      "action": "seleccion_cancelar",
+      "aliases": [
+        "cancela seleccion",
+        "cancelar seleccion",
+        "olvida seleccion",
+        "cancel selection"
+      ],
+      "scope": "idle",
+      "help": "olvida el origen fijado",
+      "help_en": "forgets the start point",
+      "alias_en": "cancel selection"
+    },
+    "refrescar_capturas": {
+      "action": "refresh_captures",
+      "aliases": [
+        "refrescar",
+        "refresca",
+        "refresco",
+        "refresh"
+      ],
+      "scope": "idle",
+      "help": "vuelve a capturar la pantalla y actualiza la vista que estés mirando",
+      "help_en": "re-captures the screen and updates the view you are looking at",
+      "alias_en": "refresh"
+    },
+    "repetir_desplazamiento": {
+      "action": "repeat_scroll",
+      "aliases": [
+        "otra",
+        "otro",
+        "otra vez",
+        "again"
+      ],
+      "scope": "idle",
+      "help": "repite el último desplazamiento, sea cual sea y en el mismo sitio",
+      "help_en": "repeats the last scroll, whichever it was and in the same place",
+      "alias_en": "again"
+    },
+    "_retiradas": [
+      "revive"
+    ]
+  },
+  "routes": {
+    "_comentario": "A dónde va el texto/comando confirmado.",
+    "default": "keyboard"
+  },
+  "vc_commands": {
+    "_comentario": "Tablero de 100 casillas (Sección 1 del manual). Formato DIRECTO de un solo tiro: <accion> <casilla 1-100> (sin ajuste fino, actúa en el centro exacto). Si ya hay una casilla SELECCIONADA (se dijo el número solo, sin acción, o se tocó en el tablero), estas mismas palabras de acción funcionan SOLAS (sin repetir la casilla) y actúan sobre la posición ya ajustada -- ver board_directions para el ajuste fino.",
+    "move": {
+      "handler": "vc_move",
+      "aliases": [
+        "mover",
+        "move",
+        "mueve"
+      ],
+      "scope": "any",
+      "help": "'mover <casilla 1-100>': entra en el cuarto de escritorio para afinar",
+      "help_en": "'move <square 1-100>': zooms into that quarter of the desktop to aim",
+      "alias_en": "move"
+    },
+    "click": {
+      "handler": "vc_click_left",
+      "aliases": [
+        "click",
+        "clica",
+        "clic",
+        "click izquierdo",
+        "left click",
+        "pulsa",
+        "pulsar",
+        "toca",
+        "pincha",
+        "clip",
+        "lit",
+        "mit"
+      ],
+      "scope": "any",
+      "help": "'click <casilla>' o 'click' con casilla ya elegida",
+      "help_en": "'click <square>' or just 'click' with a square already chosen",
+      "alias_en": "click"
+    },
+    "click derecho": {
+      "handler": "vc_click_right",
+      "aliases": [
+        "click derecho",
+        "clic derecho",
+        "right click",
+        "pulsa derecho",
+        "toca derecho",
+        "pincha derecho",
+        "clip derecho",
+        "lit derecho"
+      ],
+      "scope": "any",
+      "help": "clic derecho, mismo formato que 'click'",
+      "help_en": "right click, same format as 'click'",
+      "alias_en": "right click"
+    },
+    "doble click": {
+      "handler": "vc_double_click",
+      "aliases": [
+        "doble click",
+        "doble clic",
+        "double click",
+        "doble pulsa",
+        "pulsa dos veces",
+        "doble toca",
+        "doble clip",
+        "doble lit"
+      ],
+      "scope": "any",
+      "help": "doble clic, mismo formato que 'click'",
+      "help_en": "double click, same format as 'click'",
+      "alias_en": "double click"
+    },
+    "scroll arriba": {
+      "handler": "vc_scroll_up",
+      "aliases": [
+        "scroll arriba",
+        "scroll up"
+      ],
+      "scope": "any",
+      "help": "scroll arriba en la casilla apuntada",
+      "help_en": "scrolls up inside the square you're aiming at",
+      "alias_en": "scroll up"
+    },
+    "scroll abajo": {
+      "handler": "vc_scroll_down",
+      "aliases": [
+        "scroll abajo",
+        "scroll down"
+      ],
+      "scope": "any",
+      "help": "scroll abajo en la casilla apuntada",
+      "help_en": "scrolls down inside the square you're aiming at",
+      "alias_en": "scroll down"
+    },
+    "scroll izquierda": {
+      "handler": "vc_scroll_left",
+      "aliases": [
+        "scroll izquierda",
+        "scroll left"
+      ],
+      "scope": "any",
+      "help": "scroll a la izquierda en la casilla apuntada",
+      "help_en": "scrolls left inside the square you're aiming at",
+      "alias_en": "scroll left"
+    },
+    "scroll derecha": {
+      "handler": "vc_scroll_right",
+      "aliases": [
+        "scroll derecha",
+        "scroll right"
+      ],
+      "scope": "any",
+      "help": "scroll a la derecha en la casilla apuntada",
+      "help_en": "scrolls right inside the square you're aiming at",
+      "alias_en": "scroll right"
+    }
+  },
+  "board_directions": {
+    "_comentario": "Ajuste fino (Sección 1, Paso 2 del manual): 8 direcciones, solo tienen efecto mientras hay una casilla SELECCIONADA. '<direccion>' sola mueve el marcador un paso (config.BOARD_NUDGE_STEP_PX); '<direccion> <n>' mueve n píxeles exactos ('oeste 1', 'noreste 3'...). Mientras NO hay casilla seleccionada, oeste/este/norte/sur siguen funcionando como atajos de teclado normales (ver control_words: arriba/abajo/izquierda/derecha -> flechas); las diagonales no colisionan con nada.",
+    "oeste": {
+      "vector": [
+        -1,
+        0
+      ],
+      "aliases": [
+        "oeste",
+        "izquierda",
+        "west",
+        "left"
+      ]
+    },
+    "este": {
+      "vector": [
+        1,
+        0
+      ],
+      "aliases": [
+        "este",
+        "derecha",
+        "east",
+        "right"
+      ]
+    },
+    "norte": {
+      "vector": [
+        0,
+        -1
+      ],
+      "aliases": [
+        "norte",
+        "arriba",
+        "north",
+        "up"
+      ]
+    },
+    "sur": {
+      "vector": [
+        0,
+        1
+      ],
+      "aliases": [
+        "sur",
+        "abajo",
+        "south",
+        "down"
+      ]
+    },
+    "noreste": {
+      "vector": [
+        1,
+        -1
+      ],
+      "aliases": [
+        "noreste",
+        "nordeste",
+        "northeast",
+        "ne"
+      ]
+    },
+    "noroeste": {
+      "vector": [
+        -1,
+        -1
+      ],
+      "aliases": [
+        "noroeste",
+        "northwest",
+        "nw"
+      ]
+    },
+    "sureste": {
+      "vector": [
+        1,
+        1
+      ],
+      "aliases": [
+        "sureste",
+        "sudeste",
+        "southeast",
+        "se"
+      ]
+    },
+    "suroeste": {
+      "vector": [
+        -1,
+        1
+      ],
+      "aliases": [
+        "suroeste",
+        "sudoeste",
+        "southwest",
+        "sw"
+      ]
+    }
+  },
+  "app_commands": {
+    "_comentario": "Aplicaciones que se lanzan con un comando directo (NO bloqueante).",
+    "terminal": {
+      "exec": "konsole",
+      "aliases": [
+        "terminal",
+        "consola",
+        "konsole"
+      ],
+      "scope": "any",
+      "help": "abre una terminal",
+      "help_en": "opens a terminal",
+      "alias_en": "terminal",
+      "exec_windows": "cmd"
+    },
+    "explorador": {
+      "exec": "dolphin",
+      "aliases": [
+        "dolfin",
+        "explorar",
+        "delfin"
+      ],
+      "scope": "any",
+      "help": "gestor de archivos/carpetas",
+      "help_en": "file/folder browser",
+      "alias_en": "dolphin",
+      "exec_windows": "explorer"
+    },
+    "inkscape": {
+      "exec": "inkscape",
+      "aliases": [
+        "dibujar",
+        "dibujo",
+        "inkeskeip",
+        "inkesqueip",
+        "inqueskeip",
+        "inquesqueip",
+        "inkscape",
+        "dibuja"
+      ],
+      "scope": "any",
+      "help": "abre Inkscape, el programa de dibujo",
+      "help_en": "opens Inkscape, the drawing program",
+      "alias_en": "inkscape"
+    },
+    "firefox": {
+      "exec": "firefox",
+      "aliases": [
+        "navegar",
+        "web",
+        "ueb",
+        "faierfox",
+        "fairfox",
+        "feirfox",
+        "firefox",
+        "navega"
+      ],
+      "scope": "any",
+      "help": "abre el navegador",
+      "help_en": "opens the web browser",
+      "alias_en": "firefox"
+    },
+    "editor": {
+      "exec": "kate",
+      "aliases": [
+        "editor",
+        "editar",
+        "keit",
+        "queit",
+        "texto",
+        "edita"
+      ],
+      "scope": "any",
+      "help": "abre el editor de texto",
+      "help_en": "opens the text editor",
+      "alias_en": "editor",
+      "exec_windows": "notepad"
+    },
+    "_comentario_windows": "exec_windows: el programa que se lanza en Windows, si no es el mismo que en Linux. Sin el campo se usa exec: firefox e inkscape se llaman igual en las dos."
+  },
+  "terminal_commands": {
+    "_comentario": "LEGACY (dictado+confirmación): comandos que se ejecutan como shell. Ahora también pueden tener action_type y parámetros de input_action.",
+    "ejemplo listar": {
+      "cmd": "ls -la",
+      "aliases": [
+        "listar archivos",
+        "lista archivos"
+      ]
+    },
+    "_comentario_actions": "Ejemplos de acciones con input_action",
+    "copiar eso": {
+      "cmd": "echo 'Copiar: Ctrl+C'",
+      "action_type": "key",
+      "key": "ctrl+c",
+      "aliases": [
+        "copiar eso",
+        "copia eso",
+        "copia ahí"
+      ]
+    },
+    "pegar aqui": {
+      "cmd": "echo 'Pegar: Ctrl+V'",
+      "action_type": "key",
+      "key": "ctrl+v",
+      "aliases": [
+        "pegar aqui",
+        "pega aquí",
+        "pega aca"
+      ]
+    },
+    "click en posicion": {
+      "cmd": "echo 'Clicking...'",
+      "action_type": "click",
+      "aliases": [
+        "click en posición",
+        "click ahi",
+        "clic en posición",
+        "clic ahi",
+        "clica en posición",
+        "clica ahi"
+      ]
+    }
+  },
+  "_ejemplos_avanzados": {
+    "_comentario": "Ejemplos de cómo usar las nuevas características",
+    "uso_ultima_posicion": {
+      "descripcion": "Después de hacer 'click 45 3', puedes decir 'click ahí' o 'ahí mover' para reutilizar esa posición",
+      "ejemplo1": "click 45 3 → ... → click ahí",
+      "ejemplo2": "mover 50 5 → ... → ahí scroll arriba"
+    },
+    "uso_teclado": {
+      "descripcion": "Atajos de teclado reconocidos directamente como comandos",
+      "ejemplo1": "copiar",
+      "ejemplo2": "pegar",
+      "ejemplo3": "guardar",
+      "nota": "Solo funcionan en scope 'idle'. Ver control_words arriba."
+    },
+    "uso_input_action": {
+      "descripcion": "Acciones parametrizables flexibles para cosas complejas",
+      "via_dictado": "dictar → parametrized:{...} → entra",
+      "via_json": "agregar una entrada en terminal_commands con 'action_type' y parámetros",
+      "ejemplo": {
+        "name": "copiar eso",
+        "action_type": "key",
+        "key": "ctrl+c",
+        "aliases": [
+          "copiar eso"
+        ]
+      }
+    }
+  },
+  "comandos_con_rango": {
+    "_comentario": "Comandos que NO son una palabra sino UN NUMERO dentro de un rango. Un numero solo YA ES un comando: decir 'cuarenta y cinco' entra en la casilla 45 (ver command_router._try_parse_bare_cell). Estan aqui, en una seccion aparte, y no en vc_commands ni en control_words, PORQUE ESAS SI SE USAN PARA RECONOCER: meter aqui un alias como '<numero del 1 al 100>' crearia un comando fantasma que nadie va a decir nunca. Esta seccion la lee la AYUDA y no el reconocedor. El numero lo interpreta numbers_es.py, que compone 'cuarenta y cinco' a partir de sus piezas -- por eso se declara un RANGO y no cien alias: cien entradas duplicarian esa logica, harian la ayuda ilegible (cien lineas de '45 - entra en la casilla 45') y crearian dos sitios que pueden discrepar.",
+    "casilla": {
+      "aliases": [
+        "<un número del 1 al 100>"
+      ],
+      "rango": [
+        1,
+        100
+      ],
+      "scope": "idle",
+      "help": "entra en esa casilla del tablero",
+      "help_en": "goes into that square of the board",
+      "alias_en": "<a number from 1 to 100>"
+    },
+    "zona": {
+      "aliases": [
+        "<un número del 1 al 9>"
+      ],
+      "rango": [
+        1,
+        9
+      ],
+      "scope": "idle",
+      "help": "dentro de una casilla: actúa en esa zona detectada",
+      "help_en": "inside a square: acts on that detected zone",
+      "alias_en": "<a number from 1 to 9>"
+    }
+  },
+  "comandos_con_nombre": {
+    "_comentario": "Comandos que no son un alias fijo de una sola forma: llevan un NOMBRE o un NUMERO detras (los parsea command_router: _try_parse_carpeta, _try_parse_foco_window, _try_parse_direct_vc...), o son las pocas frases fijas que se reconocen en el propio codigo (menos zoom, tactil/cara, soy yo). Esta seccion NO se usa para reconocer: existe para que salgan en la ayuda y en COMANDOS.md.",
+    "traer_ventana": {
+      "aliases": [
+        "trae <nombre>"
+      ],
+      "scope": "idle",
+      "help": "trae al frente la ventana de esa aplicación: \"trae kate\", \"trae explorador\". OJO: no es lo mismo que \"foco\", que es la vista",
+      "help_en": "brings that program's window to the front, said in Spanish for now: \"trae kate\", \"trae explorador\". NOT the same as \"focus\", which is the view"
+    },
+    "carpeta": {
+      "aliases": [
+        "carpeta <nombre>"
+      ],
+      "scope": "idle",
+      "help": "trae esa carpeta del perfil si está abierta, o la abre. NO la crea",
+      "help_en": "brings that profile folder if open, or opens it; won't create it. Said in Spanish for now: \"carpeta descargas\""
+    },
+    "terminal_en": {
+      "aliases": [
+        "terminal en <nombre>"
+      ],
+      "scope": "idle",
+      "help": "abre una consola dentro de esa carpeta",
+      "help_en": "opens a terminal inside that folder. Said in Spanish for now: \"terminal en documentos\""
+    },
+    "crear_carpeta": {
+      "aliases": [
+        "crear carpeta <nombre>"
+      ],
+      "scope": "idle",
+      "help": "crea una carpeta DONDE tengas abierto Dolphin",
+      "help_en": "creates a folder WHERE Dolphin is showing. Said in Spanish for now"
+    },
+    "crear_archivo": {
+      "aliases": [
+        "crear archivo <nombre>"
+      ],
+      "scope": "idle",
+      "help": "crea un archivo donde tengas abierto Dolphin. Di la extensión por su NOMBRE al final: \"apuntes texto\" -> apuntes.txt, \"arranque guion\" -> .sh, \"programa python\" -> .py. El punto lo pone el programa",
+      "help_en": "creates a file where Dolphin is showing, saying the extension by name at the end. Said in Spanish for now: \"crear archivo apuntes texto\" -> apuntes.txt"
+    },
+    "foco_ventana": {
+      "aliases": [
+        "foco <nombre>"
+      ],
+      "scope": "idle",
+      "help": "la vista foco, sobre la ventana de ese programa: \"foco kate\", \"foco firefox\"",
+      "help_en": "the focus view, on that program's window: \"focus kate\"",
+      "alias_en": "focus <name>"
+    },
+    "guardar_como_nombre": {
+      "aliases": [
+        "guardar como <nombre>"
+      ],
+      "scope": "idle",
+      "help": "abre Guardar como y escribe el nombre; luego di intro",
+      "help_en": "opens Save as and types the name; then say enter",
+      "alias_en": "save as <name>"
+    },
+    "accion_en_casilla": {
+      "aliases": [
+        "<acción> <casilla>"
+      ],
+      "scope": "idle",
+      "help": "de un tirón, en el centro de esa casilla: \"click 45\", \"doble click 12\", \"scroll abajo 30\"",
+      "help_en": "in one go, at the centre of that square: \"click 45\", \"double click 12\"",
+      "alias_en": "<action> <square>"
+    },
+    "accion_verde": {
+      "aliases": [
+        "<acción> verde"
+      ],
+      "scope": "idle",
+      "help": "actúa donde está el punto verde que mueves con el ratón o el touchpad: \"click verde\"",
+      "help_en": "acts where the green dot you move with the mouse or touchpad is: \"click green\"",
+      "alias_en": "<action> green"
+    },
+    "accion_rojo": {
+      "aliases": [
+        "<acción> rojo"
+      ],
+      "scope": "idle",
+      "help": "actúa donde tiene el móvil su punto rojo: \"click rojo\". Con el móvil conectado basta la acción a secas",
+      "help_en": "acts where the phone has its red dot: \"click red\". With the phone connected, the action alone is enough",
+      "alias_en": "<action> red"
+    },
+    "direccion_con_numero": {
+      "aliases": [
+        "<dirección> <número>"
+      ],
+      "scope": "idle",
+      "help": "dentro de una casilla, del zoom o del foco: mueve el punto verde ese número de píxeles: \"izquierda 5\", \"noreste 3\"",
+      "help_en": "inside a square, zoom or focus: moves the green dot that many pixels: \"left 5\", \"northeast 3\"",
+      "alias_en": "<direction> <number>"
+    },
+    "menos_zoom": {
+      "aliases": [
+        "menos zoom",
+        "zoom out"
+      ],
+      "scope": "idle",
+      "help": "desde una casilla: pasa a ver el cuarto de pantalla que la rodea",
+      "help_en": "from a square: shows the quarter of the screen around it",
+      "alias_en": "zoom out"
+    },
+    "seguimiento_tactil": {
+      "aliases": [
+        "táctil",
+        "cara",
+        "touch",
+        "face"
+      ],
+      "scope": "idle",
+      "help": "táctil: el punto verde sigue al ratón o touchpad; cara: deja de seguirlo",
+      "help_en": "touch: the green dot follows the mouse or touchpad; face: it stops following it",
+      "alias_en": "touch"
+    },
+    "corregir_una_palabra": {
+      "aliases": [
+        "corrige <número> <cómo>"
+      ],
+      "scope": "dictating",
+      "help": "cambia esa palabra del Pre-Texto: mayúscula, minúscula, siglas, cifras o letras. \"corrige 3 mayúscula\"",
+      "help_en": "changes that word of the Pre-Text: capital, lowercase, acronym, digits or letters",
+      "alias_en": "correct <number> <how>"
+    },
+    "soy_yo": {
+      "aliases": [
+        "soy yo",
+        "desbloquear",
+        "continuar",
+        "sigue",
+        "it's me",
+        "unlock",
+        "continue"
+      ],
+      "scope": "any",
+      "help": "si no te reconoce la voz o se ha bloqueado por una voz ajena: vuelve a pedirte el santo y seña",
+      "help_en": "if it doesn't recognise your voice or it locked itself after a stranger's voice: asks for your passphrase again",
+      "alias_en": "it's me"
+    }
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "_comentario": "Pistas de TEXTO para decidir si una frase es pregunta, exclamacion o sugerencia. Se puede ampliar sin tocar codigo. Las entradas se comparan en minusculas y sin acentos: da igual como se escriban aqui.",
+  "_comentario_orden": "El orden de comprobacion es: 1) exclamaciones_inicio, 2) exclamaciones_frase, 3) preguntas_inicio, 4) preguntas_final, 5) exclamaciones_sueltas, 6) sugerencias. Las exclamaciones seguras van PRIMERO a proposito: 'que barbaridad' empieza por 'que', que tambien abre preguntas, y sin esto se clasificaba como pregunta.",
+  "exclamaciones_inicio": {
+    "_comentario": "Al PRINCIPIO de la frase no dejan lugar a duda: quien dice 'ay' o 'ojala' no esta preguntando. Ganan a cualquier otra pista.",
+    "es": [
+      "ay",
+      "uy",
+      "huy",
+      "caray",
+      "caramba",
+      "ojala",
+      "menudo",
+      "menuda",
+      "vaya",
+      "anda",
+      "socorro",
+      "cuidado",
+      "bravo",
+      "olé",
+      "que barbaridad",
+      "que pena",
+      "que alegria",
+      "que horror",
+      "que suerte",
+      "que lastima",
+      "no me digas",
+      "madre mia",
+      "por dios",
+      "dios mio"
+    ],
+    "en": [
+      "wow",
+      "ouch",
+      "oops",
+      "hooray",
+      "yikes",
+      "damn",
+      "gosh",
+      "how wonderful",
+      "how awful",
+      "how terrible",
+      "what a pity"
+    ]
+  },
+  "exclamaciones_frase": {
+    "_comentario": "Frases que SOLO cuentan completas. En ingles esto importa: 'god' o 'hell' sueltos aparecen en preguntas y en frases normales sin ninguna entonacion especial, asi que no se puede mirar palabra por palabra.",
+    "en": [
+      "oh my god",
+      "oh my gosh",
+      "what the hell",
+      "what the heck",
+      "for god's sake",
+      "good heavens",
+      "holy cow",
+      "no way",
+      "you must be kidding",
+      "are you kidding me"
+    ],
+    "es": [
+      "no me lo puedo creer",
+      "no puede ser",
+      "ni hablar",
+      "faltaria mas"
+    ]
+  },
+  "exclamaciones_sueltas": {
+    "_comentario": "Pistas mas debiles: valen en cualquier parte de la frase, pero solo si antes no ha encajado ninguna pregunta.",
+    "es": [
+      "genial",
+      "increible",
+      "guau",
+      "estupendo",
+      "fantastico",
+      "excelente",
+      "impresionante",
+      "que fuerte"
+    ],
+    "en": [
+      "great",
+      "awesome",
+      "amazing",
+      "incredible",
+      "unbelievable"
+    ]
+  },
+  "preguntas_inicio": {
+    "es": [
+      "que",
+      "quien",
+      "quienes",
+      "como",
+      "cuando",
+      "donde",
+      "adonde",
+      "cual",
+      "cuales",
+      "cuanto",
+      "cuanta",
+      "cuantos",
+      "cuantas",
+      "por que",
+      "acaso",
+      "es",
+      "esta",
+      "estas",
+      "son",
+      "puedes",
+      "podrias",
+      "sabes",
+      "tienes",
+      "hay"
+    ],
+    "en": [
+      "what",
+      "who",
+      "when",
+      "where",
+      "which",
+      "why",
+      "how",
+      "can",
+      "could",
+      "do",
+      "does",
+      "is",
+      "are",
+      "have",
+      "has"
+    ]
+  },
+  "preguntas_final": {
+    "_comentario": "Coletillas al final: '..., verdad?'",
+    "es": [
+      "verdad",
+      "no",
+      "vale",
+      "cierto"
+    ],
+    "en": [
+      "right",
+      "ok",
+      "okay"
+    ]
+  },
+  "sugerencias": {
+    "es": [
+      "deberias",
+      "deberiamos",
+      "podrias",
+      "podriamos",
+      "seria mejor",
+      "que tal si",
+      "por que no",
+      "sugiero",
+      "propongo",
+      "y si",
+      "tal vez podriamos",
+      "convendria"
+    ],
+    "en": [
+      "you should",
+      "we should",
+      "maybe we could",
+      "how about",
+      "what about",
+      "i suggest",
+      "why don't we"
+    ]
+  },
+  "quitadas": {
+    "_comentario": "Palabras que NO quieres, aunque vengan en el paquete. Borrarlas de las listas de arriba no basta: al actualizar volverian, porque el fusionador no puede distinguir 'esto lo quite' de 'esto no lo tenia todavia'. Ponlas aqui y se quedan fuera para siempre.",
+    "es": [],
+    "en": []
+  }
+}

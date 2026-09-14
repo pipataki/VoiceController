@@ -1,0 +1,88 @@
+# ===========================================================================
+#  Qué NO entra en el repositorio
+# ===========================================================================
+#  La lista de datos personales se toma de tools/hacer_paquete.sh, que es donde
+#  se decide qué no sale nunca del proyecto. Si algún día se añade un fichero
+#  con datos del usuario, hay que apuntarlo en LOS DOS SITIOS.
+# ===========================================================================
+
+# --- Datos personales: NUNCA ------------------------------------------------
+config_local.py
+webapp_config.json
+webapp_cert.pem
+webapp_key.pem
+config/speaker_profile*.json
+corrections.json
+window_names.json
+commands.json
+tools/speaker_calibration_data.json
+
+# --- Pesado o regenerable ---------------------------------------------------
+venv/
+vosk_models/
+piper_voices/
+__pycache__/
+*.pyc
+dist/
+tutorial/
+*.apk
+
+# --- Copias antiguas, ahora las hace git ------------------------------------
+.backups/
+.update_backups/
+.updates/
+backup_*/
+
+# --- Basura de ejecución ----------------------------------------------------
+logs/
+nohup.out
+webapp_uploads/
+webapp/static/board/*.png
+# Qué vista enseña el GUI: lo escribe él al cambiar, no hace falta instalarlo
+webapp/static/board/vista_actual.txt
+*.wav
+*.mkv
+*.log
+
+# --- La app android (12-sep-2026) -------------------------------------------
+# Sus fuentes van en este git, que es el de desarrollo, pero NO se reparten:
+# el zip y lo publicado las dejan fuera (EXCLUIR en tools/hacer_paquete.sh).
+# De la app solo se publica la APK generica firmada. La clave de firma vive
+# fuera del proyecto y no pasa nunca por git. Aqui se ignora lo que se
+# genera al construir:
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+android/gradle/
+android/gradlew*
+# Los escribe build_apk.sh: llevan la direccion y el certificado de ESTE
+# ordenador, y cambian segun se construya la APK propia o la generica.
+android/app/src/main/res/raw/
+android/app/src/main/res/values/config.xml
+android/app/src/main/res/xml/network_security_config.xml
+
+# --- Del sistema ------------------------------------------------------------
+.DS_Store
+*.swp
+
+# Capturas del GUI que va guardando ./silentRun.sh --captura-*: material de
+# trabajo para el manual, no del programa.
+capturas_manual/
+
+# Tus listas de prosodia. Se crean al instalar desde prosody.default.json y
+# se fusionan al actualizar (ver tools/merge_prosody.py), igual que
+# commands.json -- lo tuyo no se pisa y lo nuevo llega.
+prosody.json
+
+# El log del arranque anterior (runlog.py). *.log de arriba no lo pilla,
+# porque termina en .1 y no en .log
+voicecontroller.log.1
+VoiceController-*.zip
+.instalado
+
+# Los manuales: se rehacen y no viajan en el repositorio (11-sep-2026).
+VoiceController_Manual_*.pdf
+
+# ISOs de transferencia a la VM (se rehacen con tools/iso_para_vm.sh)
+paraVM.iso

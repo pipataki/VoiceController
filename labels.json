@@ -1,0 +1,40 @@
+{
+  "es": {
+    "active_prefix": "Activo",
+    "cell_label": "Celda",
+    "state_idle": "Escucha",
+    "state_dictating": "Dictar",
+    "state_formula": "Formula",
+    "state_voice": "Voz",
+    "btn_enter": "Entrar",
+    "btn_reset": "Borrar",
+    "btn_correct": "Corregir",
+    "btn_idle": "Escucha",
+    "btn_close": "Cerrar",
+    "btn_copy": "Copiar",
+    "btn_paste": "Pegar",
+    "btn_select": "Seleccion",
+    "btn_clear": "Vaciar",
+    "texto_label": "Texto:",
+    "board_placeholder": "(sin captura de tablero todavia -- di un numero de casilla)"
+  },
+  "en": {
+    "active_prefix": "Active",
+    "cell_label": "Cell",
+    "state_idle": "Listen",
+    "state_dictating": "Dictate",
+    "state_formula": "Formula",
+    "state_voice": "Voice",
+    "btn_enter": "Enter",
+    "btn_reset": "Reset",
+    "btn_correct": "Correct",
+    "btn_idle": "Listen",
+    "btn_close": "Close",
+    "btn_copy": "Copy",
+    "btn_paste": "Paste",
+    "btn_select": "Select",
+    "btn_clear": "Clear",
+    "texto_label": "Text:",
+    "board_placeholder": "(no board capture yet -- say a cell number)"
+  }
+}

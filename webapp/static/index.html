@@ -1,0 +1,1929 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VoiceController Remote Mic</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Página SIN scroll: la composición de paneles + tablero + compás
+       generaba una barra de scroll en móvil que interfería con la
+       funcionalidad táctil (el gesto de scroll competía con el toque
+       sobre el tablero/compás). html/body quedan fijos al alto del
+       viewport (100dvh, se adapta a la barra de direcciones móvil) y
+       sin overflow; .container es el único candidato a overflow-y como
+       red de seguridad para pantallas muy pequeñas, pero el objetivo es
+       que el contenido quepa siempre sin necesitarlo (ver también el
+       tope de altura de #boardImg más abajo). touch-action/
+       overscroll-behavior evitan que el navegador interprete un toque
+       rápido como gesto de scroll/rebote. */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #0a0e27;
+      color: #e0e6ed;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 20px;
+      /* "none": nada de pan/scroll táctil en toda la página -- si algún
+         contenido no cupiera en pantallas muy pequeñas, .container sigue
+         teniendo overflow-y:auto como red de seguridad, pero solo
+         alcanzable con ratón/scrollbar, nunca compitiendo con el toque */
+      touch-action: none;
+    }
+
+    .container {
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .zoom-out-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: #0a0e27;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0.16;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #8892a6;
+      margin-bottom: 24px;
+    }
+
+    .panel {
+      background: linear-gradient(135deg, #1a213e 0%, #14192a 100%);
+      border: 1px solid #2a3d5c;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(6px);
+    }
+
+    .panel.accent {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%);
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .panel.success {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #7e8fa3;
+      margin-bottom: 16px;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #a0adc1;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #2a3d5c;
+      border-radius: 6px;
+      color: #e0e6ed;
+      padding: 10px 12px;
+      font-size: 14px;
+      transition: all 150ms ease;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Buttons */
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .button-group.column {
+      flex-direction: column;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 150ms ease;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-family: inherit;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #fff;
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(59, 130, 246, 0.35);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(42, 61, 92, 0.5);
+      color: #cbd5e1;
+      border: 1px solid #2a3d5c;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(42, 61, 92, 0.8);
+      border-color: #3b82f6;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-success:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Status */
+    #status {
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      border-left: 3px solid;
+      background: rgba(148, 163, 184, 0.1);
+      border-left-color: #8892a6;
+      color: #cbd5e1;
+    }
+
+    .status-recording {
+      background: rgba(59, 130, 246, 0.1);
+      border-left-color: #3b82f6;
+      color: #93c5fd;
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .status-sent {
+      background: rgba(16, 185, 129, 0.1);
+      border-left-color: #10b981;
+      color: #86efac;
+    }
+
+    /* Logged in state */
+    .logged-in-badge {
+      display: none;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #86efac;
+      margin-bottom: 14px;
+    }
+
+    .logged-in-badge.show {
+      display: block;
+    }
+
+    .logged-in-badge strong {
+      color: #10b981;
+    }
+
+    /* Audio section visibility */
+    .audio-controls {
+      display: none;
+    }
+
+    .audio-controls.visible {
+      display: block;
+    }
+
+    .section-desc {
+      font-size: 12px;
+      color: #8892a6;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .stream-section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #2a3d5c;
+    }
+
+    /* --- Tablero de 100 casillas + compás de 8 direcciones --- */
+    .board-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .board-wrap {
+      position: relative;
+      border: 1px solid #2a3d5c;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0a0e27;
+      line-height: 0;
+      /* "none" y no "manipulation": manipulation sigue permitiendo el
+         pan/scroll táctil de un dedo, solo quita el doble-tap-zoom --
+         aquí no queremos NINGÚN gesto nativo, ni siquiera pan, para que
+         el toque nunca se confunda con scroll de página */
+      touch-action: none;
+    }
+
+    .board-wrap img#boardImg {
+      display: block;
+      width: 100%;
+      /* tope de altura: la imagen (captura de la ventana del GUI) no
+         tiene proporción fija y podía disparar la altura total de la
+         página por encima del viewport, forzando scroll -- object-fit
+         mantiene la proporción dentro de ese tope en vez de deformarla */
+      max-height: 38vh;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+
+    .board-placeholder {
+      padding: 28px 16px;
+      text-align: center;
+      color: #8892a6;
+      font-size: 12px;
+    }
+
+    .board-controls {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .board-refresh {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    /* Fase 3 del rediseño de accesibilidad (PDF NuevoGUI): el touchpad
+       ya NO mueve el cursor real mientras se arrastra -- solo mueve un
+       punto ROJO (100% del lado del cliente, sin red durante el
+       arrastre) sobre la imagen que el PC esté mostrando de fondo
+       (escritorio completo / cuarto de escritorio / casilla, ver
+       #touchpadBg y checkBoardState() en el JS). El cursor real solo
+       salta y actúa al confirmar (toque/dos dedos/botones), en un
+       único paso -- ver POST /board/virtual_action. */
+    .touchpad-section {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+    }
+
+    .touchpad-area {
+      position: relative;
+      margin-top: 8px;
+      height: 170px;
+      border-radius: 10px;
+      border: 1px dashed #2a3d5c;
+      background: #0a0e27;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .touchpad-area.active {
+      border-color: #22c55e;
+    }
+
+    .touchpad-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .touchpad-bg.show {
+      display: block;
+    }
+
+    .touchpad-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .touchpad-placeholder.hide {
+      display: none;
+    }
+
+    /* Con una selección a medias el punto se pone AMARILLO, igual que el
+       verde del GUI se vuelve amarillo (ver gui._color_puntero). En remoto
+       es la única señal de que el programa está esperando el final de la
+       selección: aquí no se ve la pantalla del ordenador. */
+    .touchpad-pointer.seleccionando {
+      background: #f1c40f;
+      border-color: #fde68a;
+      box-shadow: 0 0 8px rgba(241, 196, 15, 0.9);
+    }
+
+    /* El punto rojo -- posición puesta por JS con left/top en % (ver
+       updatePointerPosition()), nunca visible hasta el primer toque. */
+    .touchpad-pointer {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      margin-left: -8px;
+      margin-top: -8px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 2px solid #fecaca;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+      transition: background 120ms linear, box-shadow 120ms linear;
+      display: none;
+      pointer-events: none;
+    }
+
+    .touchpad-pointer.show {
+      display: block;
+    }
+
+    /* Botones izquierdo/derecho explícitos, como los de un touchpad
+       físico de teclado -- alternativa fiable al toque con 1/2 dedos
+       sobre #touchpadArea, por si el gesto de varios dedos no se
+       detecta bien en algún móvil; confirman la acción en la posición
+       ACTUAL del punto rojo (ver confirmAction() en el JS). */
+    .touchpad-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .touchpad-btn {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #2a3d5c;
+      background: rgba(15, 23, 42, 0.7);
+      color: #cbd5e1;
+      font-size: 13px;
+      cursor: pointer;
+      /* SIN ESTO LOS BOTONES NO FUNCIONAN EN EL MOVIL. NUNCA.
+         Y el fallo es de los que no se ven venir: al tocar un boton, el
+         navegador puede decidir que estas empezando a desplazar la pagina
+         y CANCELA la secuencia tactil -- dispara touchcancel en vez de
+         touchend. wireTap() solo escucha touchend, asi que el manejador no
+         llega a ejecutarse. Y el respaldo tampoco salva, porque wireTap
+         hace preventDefault() en touchstart y eso mata el clic sintetico.
+         Resultado: pulsas y no pasa absolutamente nada, sin un error, sin
+         una peticion, sin un rastro en el log del PC.
+         El area del touchpad ya lo tenia (.touchpad-area) y por eso los
+         toques ahi si funcionaban: la diferencia entre las dos cosas era
+         justo esta linea. */
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .touchpad-btn:active {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel {
+      animation: fadeIn 300ms ease-out;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      button {
+        padding: 12px 14px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- Capa de fondo permanente: zoom_out.png (cuarto de escritorio, sin
+       numerar -- ver board.capture_zoom_out), SIEMPRE detrás de todo lo
+       demás. Da un término medio de contexto visual (ni todo el
+       escritorio ni una sola casilla) mientras se usa el resto de la
+       webapp -- mejora de accesibilidad. Opacidad baja para no competir
+       con el contenido real; se actualiza junto al resto de imágenes en
+       pollBoardInfo() (ver más abajo), nunca por sondeo continuo. -->
+  <div id="zoomOutBackdrop" class="zoom-out-backdrop"></div>
+
+  <div class="container">
+    <h1>VoiceController</h1>
+    <p class="subtitle">Micrófono remoto — Control por voz</p>
+
+    <!-- Login Panel -->
+    <div class="panel accent">
+      <div class="panel-title">🔐 Autenticación</div>
+      
+      <div class="form-group">
+        <label for="userInput">Usuario</label>
+        <input id="userInput" type="text" value="admin" />
+      </div>
+
+      <div class="form-group">
+        <label for="passwordInput">Contraseña</label>
+        <input id="passwordInput" type="password" />
+      </div>
+
+      <div class="button-group column">
+        <button id="loginBtn" class="btn-primary">Iniciar sesión</button>
+        <button id="logoutBtn" class="btn-danger" style="display: none;">Cerrar sesión</button>
+      </div>
+
+      <div class="logged-in-badge" id="loggedInLabel">
+        ✓ Sesión activa como <strong id="currentUser"></strong>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="status">No autenticado</div>
+
+    <!-- Audio Controls -->
+    <div class="audio-controls" id="audioSection">
+      <div class="panel success">
+        <div class="panel-title">🎤 Grabación de audio</div>
+        
+        <p class="section-desc">
+          Presiona Grabar para capturar audio del micrófono. Se envían automáticamente en fragmentos al servidor.
+        </p>
+
+        <div class="button-group">
+          <button id="start" class="btn-success">Grabar</button>
+          <button id="stop" class="btn-danger" disabled>Detener</button>
+        </div>
+
+        <div class="stream-section board-panel">
+          <p class="section-desc">Ventana del GUI (espejo en vivo):</p>
+          <div id="boardWrap" class="board-wrap">
+            <img id="boardImg" src="" alt="ventana VoiceController" />
+            <div id="boardPlaceholder" class="board-placeholder">
+              (sin conexión con el GUI todavía — toca "Actualizar" o dicta algo en el PC)
+            </div>
+          </div>
+
+          <div class="board-controls">
+            <button id="boardRefresh" class="btn-secondary board-refresh">↻ Actualizar</button>
+
+            <div class="touchpad-section">
+              <p class="section-desc">
+                Arrastra el punto rojo sobre la imagen para posicionarlo
+                (sin tocar nada del PC todavía), y confirma con los
+                botones o tocando -- toca = clic izquierdo, dos dedos =
+                clic derecho. El fondo cambia solo según lo que estés
+                haciendo en el PC (escritorio completo / cuarto de
+                escritorio / casilla). Sin nada seleccionado se ve el
+                escritorio entero, así que puedes apuntar directamente
+                desde aquí.
+              </p>
+              <div id="touchpadArea" class="touchpad-area">
+                <img id="touchpadBg" class="touchpad-bg" alt="" />
+                <div id="touchpadPointer" class="touchpad-pointer"></div>
+                <div id="touchpadPlaceholder" class="touchpad-placeholder">🖐 Arrastra aquí</div>
+              </div>
+
+              <div class="touchpad-buttons">
+                <button id="tpBtnLeft" class="touchpad-btn">Izquierdo</button>
+                <button id="tpBtnRight" class="touchpad-btn">Derecho</button>
+              </div>
+
+              <!-- Modo cara: mover el puntero con la cabeza. Los botones de clic de
+                   arriba siguen valiendo -- hacer clic con gestos da falsos positivos,
+                   y por voz o por boton es mas fiable. -->
+              <div class="touchpad-buttons">
+                <button id="btnCara" class="touchpad-btn">Modo cara</button>
+                <button id="btnCentrarCara" class="touchpad-btn">Centrar</button>
+              </div>
+              <!-- El video no se ensena: solo hace falta para que el detector tenga
+                   de donde leer. La imagen NO sale del telefono. -->
+              <video id="caraVideo" autoplay playsinline muted
+                     style="display:none;width:1px;height:1px;"></video>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(async function(){
+  const userInput = document.getElementById('userInput');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const loggedInLabel = document.getElementById('loggedInLabel');
+  const currentUser = document.getElementById('currentUser');
+  
+  const startBtn = document.getElementById('start');
+  const stopBtn = document.getElementById('stop');
+  const status = document.getElementById('status');
+  const audioSection = document.getElementById('audioSection');
+  const boardImg = document.getElementById('boardImg');
+  const boardPlaceholder = document.getElementById('boardPlaceholder');
+  const boardRefreshBtn = document.getElementById('boardRefresh');
+  const zoomOutBackdrop = document.getElementById('zoomOutBackdrop');
+  
+  let mediaStream = null;
+  // Testigo para que no se pidan DOS micrófonos a la vez. El arranque se
+  // dispara desde dos sitios -- el reinicio de ciclo (startBtn.click()) y
+  // el arranque automático al pedir identificación -- y pueden coincidir.
+  // Firefox lo tolera; un WebView de Android NO: el segundo intento se
+  // encuentra el micrófono ocupado por el primero y falla con
+  // NotReadableError. Era lo que impedía usar la APK.
+  let pidiendoMic = false;
+  let recorder = null;
+  let credentials = null;
+
+  // Las credenciales guardadas se COMPRUEBAN antes de darlas por buenas.
+  //
+  // Antes se restauraban a ciegas: si la contraseña del PC había cambiado,
+  // el móvil se quedaba con aspecto de sesión iniciada, sin pantalla de
+  // entrar por ninguna parte, y se ponía a mandar audio cada seis segundos
+  // que el servidor rechazaba con un 401. Desde el teléfono no se veía
+  // nada raro; el fallo solo era visible en el registro del PC.
+  //
+  // Un único /health de más al abrir, y a cambio el estado de la pantalla
+  // dice la verdad.
+  async function loadCredentials() {
+    const stored = localStorage.getItem('vc-credentials');
+    if (!stored) return false;
+    let guardadas;
+    try {
+      guardadas = JSON.parse(stored);
+    } catch (e) {
+      localStorage.removeItem('vc-credentials');
+      return false;
+    }
+    try {
+      const pair = btoa(guardadas.user + ':' + guardadas.password);
+      // OJO: contra /board/info, NO contra /health.
+      //
+      // /health está declarado "sin protección" en app.py -- es un health
+      // check, y tiene sentido que responda sin credenciales. Pero la
+      // pantalla de entrar lo usaba para validar la contraseña, así que
+      // aceptaba CUALQUIERA y decía "sesión iniciada"; después todo lo
+      // protegido devolvía 401 y no había forma de saber por qué.
+      const resp = await fetch('/board/info', {
+        headers: { 'Authorization': 'Basic ' + pair }
+      });
+      if (resp.status === 401) {
+        localStorage.removeItem('vc-credentials');
+        credentials = null;
+        updateLoginUI(false);
+        status.className = 'status-error';
+        status.textContent = '✗ La contraseña del PC ha cambiado: vuelve a entrar';
+        if (guardadas.user) userInput.value = guardadas.user;
+        return false;
+      }
+      if (!resp.ok) {
+        // Otro error (el PC a medio arrancar, por ejemplo): las
+        // credenciales pueden ser buenas, así que no se borran.
+        credentials = guardadas;
+        updateLoginUI(true);
+        return true;
+      }
+    } catch (e) {
+      // Sin red todavía: mejor dejar entrar y que falle luego con un
+      // mensaje concreto, que borrar la sesión de alguien por un corte.
+      credentials = guardadas;
+      updateLoginUI(true);
+      return true;
+    }
+    credentials = guardadas;
+    updateLoginUI(true);
+    return true;
+  }
+
+  function updateLoginUI(loggedIn) {
+    if (loggedIn && credentials) {
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'block';
+      loggedInLabel.classList.add('show');
+      currentUser.textContent = credentials.user;
+      audioSection.classList.add('visible');
+      
+      startBtn.disabled = false;
+      status.className = '';
+      status.textContent = '✓ Listo para grabar';
+      // startBoardPolling() ya hace una comprobación inicial de
+      // /board/info (pollBoardInfo()), que incluye el estado del
+      // touchpad virtual (currentView/currentCell) -- no hace falta
+      // nada más aquí para que arranque con el fondo correcto.
+      startBoardPolling();
+      // recién iniciada la sesión, lo más probable es que el PC esté
+      // pidiendo el santo y seña: se arranca la grabación sola
+      arrancarSiHayQueIdentificarse();
+    } else {
+      loginBtn.style.display = 'block';
+      logoutBtn.style.display = 'none';
+      loggedInLabel.classList.remove('show');
+      audioSection.classList.remove('visible');
+      stopBoardPolling();
+      lastBoardMtime = null;
+      
+      startBtn.disabled = true;
+      status.className = '';
+      status.textContent = '○ Ingresa credenciales para continuar';
+    }
+  }
+
+  loginBtn.onclick = async () => {
+    const user = userInput.value.trim();
+    const pwd = passwordInput.value;
+    
+    if (!user) {
+      status.className = 'status-error';
+      status.textContent = '✗ Ingresa usuario';
+      return;
+    }
+    
+    loginBtn.disabled = true;
+    status.className = '';
+    status.textContent = '⟳ Validando...';
+    
+    try {
+      const pair = btoa(user + ':' + pwd);
+      // OJO: contra /board/info, NO contra /health.
+      //
+      // /health está declarado "sin protección" en app.py -- es un health
+      // check, y tiene sentido que responda sin credenciales. Pero la
+      // pantalla de entrar lo usaba para validar la contraseña, así que
+      // aceptaba CUALQUIERA y decía "sesión iniciada"; después todo lo
+      // protegido devolvía 401 y no había forma de saber por qué.
+      const resp = await fetch('/board/info', {
+        headers: { 'Authorization': 'Basic ' + pair }
+      });
+      
+      if (resp.ok) {
+        credentials = { user, password: pwd };
+        localStorage.setItem('vc-credentials', JSON.stringify(credentials));
+        updateLoginUI(true);
+        status.className = 'status-sent';
+        status.textContent = '✓ Sesión iniciada';
+      } else {
+        status.className = 'status-error';
+        status.textContent = (resp.status === 401)
+          ? '✗ Usuario o contraseña incorrectos'
+          : '✗ El PC respondió ' + resp.status;
+      }
+    } catch (err) {
+      status.className = 'status-error';
+      status.textContent = '✗ Error: ' + err.message;
+    } finally {
+      loginBtn.disabled = false;
+    }
+  };
+
+  logoutBtn.onclick = () => {
+    // Corta la grabación si estaba activa (el ciclo alterno graba/vista
+    // en vivo podía dejarla a medias) y avisa al servidor para que
+    // vuelva YA al micrófono local -- si no, el reconocedor se queda en
+    // modo red esperando audio que ya no va a llegar, y sin ningún
+    // input hasta que el vigilante del servidor salte solo (hasta 12s,
+    // ver NETWORK_AUDIO_WATCHDOG_TIMEOUT_S en webapp/app.py). Esta
+    // llamada va ANTES de borrar `credentials` -- authHeader() la
+    // necesita.
+    if (audioNativo) { try { audioNativo.parar(); } catch (e) {} }
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+    if (credentials) {
+      fetch('/release_mic', { method: 'POST', headers: authHeader() }).catch(() => {});
+    }
+    credentials = null;
+    localStorage.removeItem('vc-credentials');
+    updateLoginUI(false);
+    passwordInput.value = '';
+    status.className = '';
+    status.textContent = '○ Sesión cerrada';
+  };
+
+  // Puente de audio nativo de la APK (AudioNativo.java, en las fuentes de la
+  // app android, que no viajan en este repositorio).
+  //
+  // En el móvil de pruebas el WebView NUNCA consigue abrir el micrófono
+  // ("Unable to select communication device!" en el registro de Android),
+  // mientras que Firefox en el mismo teléfono sí. No es algo que se pueda
+  // arreglar desde la página, así que la APK graba por su cuenta con
+  // AudioRecord y sube el PCM ella misma.
+  //
+  // Si el puente no está -- porque esto se abrió en un navegador normal --
+  // no cambia nada: se sigue usando MediaRecorder como siempre.
+  const audioNativo = (() => {
+    try {
+      return (window.vcAudioNativo && window.vcAudioNativo.disponible())
+             ? window.vcAudioNativo : null;
+    } catch (e) { return null; }
+  })();
+
+  // --- Ciclo con la app nativa de Android (5-sep-2026) -------------------
+  //
+  // ANTES: grabar 5 s -> subir (micro cerrado) -> preguntar el estado al PC
+  // (micro cerrado) -> sonar lo que hubiera que decir -> reabrir el micro.
+  // Medido sobre el log real: 7,54 s de ciclo para 5,00 s de audio util. Un
+  // TERCIO del tiempo sordo, y el usuario lo notaba como retraso entre
+  // hablar y ver la accion.
+  //
+  // AHORA: en cuanto el trozo esta GRABADO se reabre el microfono, y la
+  // subida viaja por su cuenta (AudioNativo la manda a un hilo aparte). El
+  // estado del PC vuelve dentro de la respuesta de esa misma subida, asi
+  // que la consulta del hueco desaparece: no era una peticion mas, era una
+  // peticion entera que sobraba.
+  //
+  // El microfono solo se cierra cuando el PC tiene algo que DECIR, porque
+  // si no el movil se grabaria a si mismo. Y para eso se usa cancelar() y
+  // no parar(): parar() subiria el pedazo suelto que llevara grabado, y un
+  // fragmento corto no da x-vector -- es lo que hace que el filtro no te
+  // reconozca.
+
+  window.vcAudio = {
+    // El trozo ya esta grabado; la subida todavia viaja. Se reanuda YA.
+    trozoListo: () => {
+      // Los botones se reponen a mano ANTES de pulsar. Un boton
+      // deshabilitado ignora .click() sin decir nada, y aqui startBtn lo
+      // esta desde que empezo a grabar: sin estas dos lineas el ciclo se
+      // pararia en seco despues del primer trozo, en silencio y sin error
+      // ninguno. Antes lo hacia stopBtn.onclick, que ya no interviene.
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      startBtn.click();
+    },
+
+    terminado: (bien, cuerpo) => {
+      if (bien) {
+        status.className = 'status-sent';
+        status.textContent = '✓ Audio enviado';
+      } else {
+        status.className = 'status-error';
+        status.textContent = '✗ ' + (cuerpo || 'Error de audio');
+        // Con las credenciales mal, reanudar el ciclo solo sirve para pedir
+        // permiso al PC cada seis segundos hasta el fin de los tiempos, y
+        // por pantalla parece que la app "no hace nada". Se para y se dice
+        // qué hay que hacer. Pasa de verdad: basta con cambiar la
+        // contraseña en el PC teniendo la sesión abierta en el móvil.
+        if (cuerpo && cuerpo.indexOf('contraseña') !== -1) {
+          if (audioNativo) { try { audioNativo.cancelar(); } catch (e) {} }
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          status.textContent = '✗ Contraseña cambiada: cierra sesión y vuelve a entrar';
+          return;
+        }
+        // Un fallo de red puntual no para el ciclo: la grabacion siguiente
+        // ya esta en marcha desde trozoListo().
+        return;
+      }
+
+      // El estado del PC viene DENTRO de esta respuesta (ver
+      // _estado_para_movil() en webapp/app.py). Si por lo que sea no
+      // viniera, no se hace nada raro: la consulta de siempre sigue
+      // existiendo y se encarga.
+      let estado = null;
+      try {
+        const d = JSON.parse(cuerpo || '{}');
+        estado = d && d.estado ? d.estado : null;
+      } catch (e) { /* respuesta sin JSON: se ignora */ }
+      if (!estado) return;
+
+      aplicarEstado(estado);
+
+      // La PRIMERA vez solo se toma nota del id, sin reproducir nada: si no,
+      // al abrir la app sonaria de golpe lo ultimo que el PC hubiera dicho
+      // hace un rato. Es la misma regla que ya tenia maybePlayTts(), y hay
+      // que repetirla aqui porque en este camino esa funcion solo se llama
+      // cuando ya se sabe que hay algo nuevo -- sin esto, lastTtsId se
+      // quedaria en null para siempre y la voz no sonaria NUNCA.
+      if (lastTtsId === null) {
+        lastTtsId = pendingTtsId || 0;
+        return;
+      }
+
+      // ¿Ha dicho algo el PC? Es lo UNICO que exige cerrar el microfono.
+      if (!pendingTtsId || pendingTtsId === lastTtsId) return;
+
+      // Se cierra el micro SIN subir el pedazo grabado, suena el aviso, y se
+      // reanuda. Ese audio descartado es el ratito entre trozos, no una
+      // frase: no se pierde nada que importe.
+      if (audioNativo) { try { audioNativo.cancelar(); } catch (e) {} }
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      maybePlayTts().finally(() => startBtn.click());
+    }
+  };
+
+  startBtn.onclick = async () => {
+    if (pidiendoMic) return;          // ya hay una petición en vuelo
+    pidiendoMic = true;
+
+    if (audioNativo) {
+      pidiendoMic = false;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      status.className = 'status-recording';
+      status.textContent = '● Grabando...';
+      // Las credenciales viajan a la parte nativa porque es ella quien hace
+      // la petición: el WebView no comparte su sesión con HttpURLConnection.
+      audioNativo.empezar(credentials.user, credentials.password,
+                          awaitingLogin ? LOGIN_CHUNK_MS : CHUNK_MS);
+      return;
+    }
+
+    // El flujo anterior se SUELTA antes de pedir otro: sobrescribir la
+    // variable sin cerrarlo dejaba el micrófono abierto y sin referencia,
+    // y el siguiente intento chocaba con él.
+    if (mediaStream) {
+      try { mediaStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+      mediaStream = null;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      status.className = 'status-error';
+      pidiendoMic = false;
+      status.textContent = '✗ Micrófono no disponible';
+      return;
+    }
+    try {
+      // Micrófono EN CRUDO, sin procesado. No es un capricho:
+      //
+      // con `{audio: true}` el WebView de Chromium activa la cancelación de
+      // eco, y ésta exige el "dispositivo de comunicación" -- el de las
+      // llamadas. En móviles con chip MediaTek eso falla, y Android lo dice
+      // en su registro:
+      //   chromium: audio_manager_android.cc: Unable to select
+      //             communication device!
+      // La página recibía un DOMException y lo mostraba como "micrófono
+      // ocupado". Firefox no fallaba porque usa otro camino de audio, y por
+      // eso el fallo solo aparecía en la APK.
+      //
+      // Apagando los tres procesados se pide la fuente de micrófono normal.
+      // Para reconocimiento de voz además conviene: el audio sin retocar es
+      // más consistente para el x-vector del locutor.
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        }
+      });
+    } catch (err) {
+      pidiendoMic = false;
+      // Se dice CUÁL de las cuatro causas es. Antes todas se mostraban como
+      // "Permiso denegado", y no había forma de distinguir un permiso
+      // rechazado de un micrófono ocupado por una llamada, que es de lo más
+      // frecuente en un móvil.
+      const motivos = {
+        NotAllowedError:  '✗ Permiso denegado: dáselo en los ajustes del móvil',
+        NotFoundError:    '✗ No hay micrófono disponible',
+        NotReadableError: '✗ Micrófono ocupado (¿una llamada u otra app?)',
+        SecurityError:    '✗ Conexión no segura: el micrófono necesita HTTPS',
+        AbortError:       '✗ El micrófono se cortó al arrancar',
+      };
+      status.className = 'status-error';
+      status.textContent = motivos[err && err.name] || ('✗ Micrófono: ' + (err && err.name ? err.name : 'error desconocido'));
+      // name y message por separado: volcar el objeto entero solo imprime
+      // "[object DOMException]" en el registro de Android, que no dice nada.
+      console.error('[microfono] name=' + (err && err.name) +
+                    ' | message=' + (err && err.message) +
+                    ' | constraint=' + (err && err.constraint));
+      return;
+    }
+    
+    pidiendoMic = false;
+    recorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+    // Solo el PRIMER trozo de un MediaRecorder es un WebM autocontenido (con
+    // su cabecera EBML); el que suelta recorder.stop() al cerrar es un
+    // fragmento de cluster suelto, sin cabecera, que ffmpeg rechaza siempre
+    // ("Invalid data found when processing input"). Antes se subía igual, y
+    // por eso el log salía plagado de ese error una vez por ciclo. Con este
+    // testigo cada ciclo sube exactamente un trozo válido y ninguno inútil
+    // -- no se pierde audio: ese segundo trozo nunca fue decodificable.
+    let chunkSent = false;
+    recorder.ondataavailable = async (ev) => {
+      if (chunkSent) return;
+      if (ev.data && ev.data.size > 0) {
+        chunkSent = true;
+        try {
+          status.className = 'status-recording';
+          status.textContent = '⟳ Enviando audio...';
+          const pair = btoa(credentials.user + ':' + credentials.password);
+          const form = new FormData();
+          form.append('audio', ev.data, 'chunk.webm');
+          const resp = await fetch('/receive_audio', {
+            method: 'POST',
+            body: form,
+            headers: { 'Authorization': 'Basic ' + pair }
+          });
+          if (resp.ok) {
+            status.className = 'status-sent';
+            status.textContent = '✓ Audio enviado';
+            // IMPORTANTE: NO se refresca aquí, ni siquiera tras un
+            // margen -- mientras se está grabando, cualquier refresco
+            // (aunque sea puntual) sigue interfiriendo con el
+            // reconocimiento del audio en conexiones lentas. El
+            // refresco de imágenes espera a que la grabación termine
+            // (ver stopBtn.onclick más abajo).
+
+          } else {
+            status.className = 'status-error';
+            status.textContent = '✗ Error del servidor';
+          }
+          stopBtn.click();
+
+        } catch (err) {
+          status.className = 'status-error';
+          status.textContent = '✗ Error: ' + err.message;
+        }
+      }
+    };
+    
+    // 1500ms era demasiado corto para frases algo largas -- se cortaban
+    // a mitad, sin dar tiempo a terminar de hablar antes de que el ciclo
+    // parase la grabación para el turno de la vista en vivo. Subido a
+    // 5000ms (5s): más margen por frase, y de paso menos interrupciones
+    // por minuto para la vista en vivo (cada trozo dura más). Ajustable
+    // aquí mismo -- más alto = frases más largas caben enteras, pero
+    // más tardanza en que SE RECONOZCA lo dicho al principio del trozo
+    // (hasta que termine y se suba), y si se corta la conexión a media
+    // grabación se pierde más audio de una vez.
+    // Trozo largo mientras se pide el santo y seña, para que la frase
+    // entera quepa dentro y no se parta en el hueco entre trozos.
+    recorder.start(awaitingLogin ? LOGIN_CHUNK_MS : CHUNK_MS);
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    status.className = 'status-recording';
+    status.textContent = '● Grabando...';
+    // el chequeo ligero del estado del tablero (checkBoardState -- solo
+    // JSON, sin capturas pesadas) se pausa mientras se graba, por el
+    // mismo motivo que el resto de refrescos (ver comentario grande
+    // sobre esto en board_info(), backend) -- se retoma en el hueco
+    // entre trozos (ver stopBtn.onclick)
+  };
+
+  stopBtn.onclick = () => {
+    if (audioNativo) { try { audioNativo.parar(); } catch (e) {} }
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    status.className = '';
+    status.textContent = '○ Grabación detenida';
+    // Fase 3 (PDF NuevoGUI): en el hueco entre trozos de audio, un
+    // chequeo LIGERO (solo JSON, /board/info -- nada de capturas
+    // pesadas como la antigua "vista en vivo") para que el touchpad
+    // virtual (imagen de fondo + punto rojo) sepa si el GUI cambió de
+    // pantalla (p.ej. "mover 12" dicho en el PC) -- y en cuanto
+    // termina, se reanuda la grabación sola (startBtn.click()).
+    // En este hueco, con el micrófono YA parado: primero el chequeo
+    // ligero del tablero, después se reproduce lo que el PC haya dicho
+    // (si hay algo nuevo), y solo cuando ha terminado de sonar se
+    // reanuda la grabación -- ese orden es lo que evita que el móvil se
+    // grabe a sí mismo.
+    pollBoardInfo()
+      .then(maybePlayTts)
+      .finally(() => startBtn.click());
+  };
+
+  // --- Tablero de 100 casillas: imagen estática (vc.png), sin streaming ---
+  // Se refresca sola en cuanto hay una captura NUEVA (venga de donde venga:
+  // voz desde el GUI de escritorio, botón "Actualizar" de aquí, o una
+  // acción de tablero) -- se comprueba la fecha de modificación real del
+  // archivo (vc_mtime/zoom_out_mtime, vía /board/info) en vez de recargar
+  // la imagen a ciegas, así no hay parpadeo si no ha cambiado nada.
+  // Se muestra vc.png (la ventana del GUI tal cual se ve, ver
+  // GUI._maybe_capture_vc_snapshot en gui.py) en vez de tablero.png (el
+  // escritorio completo, que en pantallas de móvil se ve minúsculo), con
+  // zoom_out.png (cuarto de escritorio, sin numerar) siempre de fondo
+  // detrás de toda la página, como término medio de contexto visual.
+  // tablero.png/casilla.png se siguen guardando igual, pero ya solo se
+  // usan internamente para calcular posiciones -- no se muestran aquí.
+  //
+  // IMPORTANTE -- refresco EVENTO-DIRIGIDO, no por sondeo continuo: un
+  // fetch() periódico en paralelo al streaming de audio (que manda un
+  // trozo cada 1.5s, ver recorder.start(1500) más arriba) competía por
+  // la conexión y causaba cortes de audio perceptibles en redes lentas
+  // (ej. fuera de casa, con datos móviles) -- solo se notaba poco porque
+  // en local, con buena conexión, no se aprecia. Se comprueba tras
+  // acciones puntuales (tocar el compás, seleccionar casilla) con un
+  // pequeño margen (500ms). MIENTRAS SE ESTÁ GRABANDO no se refresca
+  // NUNCA -- ni siquiera puntualmente tras cada trozo de audio: incluso
+  // un solo fetch() de más durante la grabación puede interferir con el
+  // reconocimiento en conexiones lentas. El refresco se pospone hasta
+  // que la grabación termina (ver stopBtn.onclick). Si en algún momento
+  // hiciera falta un sondeo de respaldo, se puede reactivar con
+  // ENABLE_CONTINUOUS_POLLING -- pero ten en cuenta que puede volver a
+  // causar cortes de audio en conexiones lentas.
+  const ENABLE_CONTINUOUS_POLLING = false;
+  const CONTINUOUS_POLL_INTERVAL_MS = 1500;
+  const POST_ACTION_REFRESH_DELAY_MS = 500;
+
+  let lastVcMtime = null;
+  let lastZoomOutMtime = null;
+  let lastCasillaMtime = null;
+  let lastTableroMtime = null;
+  // Último aviso hablado que ya se ha reproducido aquí. Empieza en null
+  // (no en 0) para distinguir "aún no sé nada" de "no hay nada dicho":
+  // al abrir la página NO debe sonar lo último que dijera el PC antes de
+  // que llegáramos -- ver maybePlayTts().
+  let lastTtsId = null;
+
+  // --- Mientras el PC pide el santo y seña -------------------------------
+  // El ciclo normal graba en trozos de 5 s y ENTRE trozo y trozo para el
+  // micrófono para subir el audio, consultar el tablero, reproducir la voz
+  // y volver a pedir el micrófono. Ese hueco dura fácilmente 1-3 s, y el
+  // santo y seña dura unos 2,5: se partía por la mitad, llegaba al PC en
+  // dos pedazos cortos, ninguno daba x-vector y nunca se podía verificar.
+  //
+  // Mientras se pide identificación se hacen dos cosas distintas:
+  //   1. Trozos MUCHO más largos, para que la frase entera quepa en uno.
+  //   2. CERO refrescos de imagen: el servidor no las sirve sin sesión
+  //      iniciada (403), y además ese tiempo es justo el que faltaba.
+  let awaitingLogin = false;
+  let enStandby = false;
+  let lastReloadId = null;
+  const CHUNK_MS = 5000;
+  const LOGIN_CHUNK_MS = 15000;
+  let boardPollTimer = null;
+  // Fecha de la ultima captura de la vista "foco", para refrescarla sola
+  // cuando cambie -- igual que lastZoomOutMtime.
+  let lastFocoMtime = null;
+  let currentView = 'tablero';   // "tablero" | "foco" | "zoom_out" | "casilla" -- ver /board/info
+  let currentCell = null;
+
+  function authHeader() {
+    return { 'Authorization': 'Basic ' + btoa(credentials.user + ':' + credentials.password) };
+  }
+
+  // --- Imágenes protegidas ------------------------------------------
+  // Las capturas del tablero están detrás de autenticación (antes se
+  // servían SIN contraseña: cualquiera en la red veía el escritorio, ver
+  // Actualización 39). Pero una etiqueta <img src="..."> NO envía la
+  // cabecera Authorization, así que todas devolvían 401 y el móvil se
+  // quedaba sin imágenes.
+  //
+  // Se bajan con fetch() -- que sí puede mandar credenciales -- y se
+  // pasan a la etiqueta como blob. Es exactamente lo que ya se hacía con
+  // /tts/latest.wav.
+  const _blobsEnUso = new Map();   // elemento -> URL de objeto a liberar
+
+  async function cargarImagenProtegida(url) {
+    const resp = await fetch(url, { headers: authHeader() });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return URL.createObjectURL(await resp.blob());
+  }
+
+  function _ponerBlob(clave, blobUrl) {
+    // liberar el anterior: sin esto cada refresco deja un blob colgado en
+    // memoria, y aquí se refresca cada pocos segundos
+    const viejo = _blobsEnUso.get(clave);
+    if (viejo) URL.revokeObjectURL(viejo);
+    _blobsEnUso.set(clave, blobUrl);
+    return blobUrl;
+  }
+
+  function refreshBoard() {
+    if (!credentials) return;
+    boardImg.onload = () => {
+      boardImg.style.display = 'block';
+      boardPlaceholder.style.display = 'none';
+    };
+    boardImg.onerror = () => {
+      boardImg.style.display = 'none';
+      boardPlaceholder.style.display = 'block';
+    };
+    cargarImagenProtegida('/board/vc.png?t=' + Date.now())
+      .then((b) => { boardImg.src = _ponerBlob('board', b); })
+      .catch(() => {
+        boardImg.style.display = 'none';
+        boardPlaceholder.style.display = 'block';
+      });
+  }
+
+  function refreshZoomOutBackdrop() {
+    if (!credentials) return;
+    cargarImagenProtegida('/board/zoom_out.png?t=' + Date.now())
+      .then((b) => {
+        zoomOutBackdrop.style.backgroundImage = `url(${_ponerBlob('backdrop', b)})`;
+      })
+      .catch(() => { /* aún no capturada o sin sesión: se deja como está */ });
+  }
+
+  // El estado del PC llega ahora por DOS caminos: la consulta de siempre y
+  // -- desde el 5-sep-2026 -- la respuesta de la propia subida de audio,
+  // que antes volvia vacia (ver _estado_para_movil() en webapp/app.py).
+  //
+  // Se aplica con la MISMA funcion en los dos casos, a proposito: si cada
+  // camino hiciera su version, la app se comportaria distinto segun por
+  // donde se hubiera enterado de las cosas, y eso no hay quien lo depure.
+  async function pollBoardInfo() {
+    if (!credentials) return;
+    try {
+      const resp = await fetch('/board/info', { headers: authHeader() });
+      if (!resp.ok) return;
+      aplicarEstado(await resp.json());
+    } catch (e) {
+      // fallo puntual de red: se reintenta en el siguiente ciclo
+    }
+  }
+
+  function aplicarEstado(data) {
+    if (!data || !credentials) return;
+    try {
+
+      // Estado de la sesión del PC. Mientras pida el santo y seña o esté
+      // en standby, NO se toca ninguna imagen: el servidor las deniega
+      // (403) y, sobre todo, cada refresco alarga el hueco entre trozos
+      // que estaba partiendo la frase de identificación.
+      // Recarga pedida por el PC: hay cambios que esta sesión de
+      // grabación no puede asumir a mitad (al terminar el enrolado del
+      // móvil pasa a hacer falta el santo y seña, con otra duración de
+      // trozo y la petición de por medio). La primera vez solo se anota
+      // el número; solo se recarga cuando CAMBIA, así que no hay bucle.
+      const rid = data.reload_id;
+      if (rid !== undefined) {
+        if (lastReloadId === null || rid < lastReloadId) {
+          // primera lectura, o el PC se ha reiniciado y su contador
+          // volvió a empezar: se toma el valor actual como referencia
+          lastReloadId = rid;
+        } else if (rid > lastReloadId) {
+          // SOLO si SUBE. Al reiniciar el PC el contador vuelve a 0
+          // mientras el móvil recuerda un número mayor; comparando por
+          // "distinto" se recargaría sin motivo cada vez que se reinicia
+          // el ordenador.
+          status.className = 'status-recording';
+          status.textContent = '↻ Reiniciando sesión...';
+          setTimeout(() => location.reload(), 400);
+          return;
+        }
+      }
+
+      const antes = awaitingLogin + '|' + enStandby;
+      // Trozos LARGOS para el santo y seña (frase larga), que es también lo
+      // que despierta de la espera: el servidor manda awaiting_login en
+      // espera (14-sep-2026; antes se esperaba "revive", una palabra).
+      awaitingLogin = !!data.awaiting_login;
+      enStandby = !!data.standby;
+      if (antes !== awaitingLogin + '|' + enStandby) {
+        status.className = (awaitingLogin || enStandby) ? 'status-recording' : 'status-sent';
+        status.textContent = enStandby     ? '😴 En espera: di tu santo y seña'
+                           : awaitingLogin ? '🔐 Santo y seña: di tu frase'
+                           : '✓ Sesión iniciada';
+      }
+      // Sin sesión iniciada no se toca ninguna imagen: el servidor las
+      // deniega (403) y ese tiempo es justo el que falta para el audio.
+      if (awaitingLogin || enStandby) {
+        pendingTtsId = data.tts_id || 0;
+        return;
+      }
+
+      if (data.has_vc && data.vc_mtime !== lastVcMtime) {
+        lastVcMtime = data.vc_mtime;
+        refreshBoard();
+      }
+      if (data.has_zoom_out && data.zoom_out_mtime !== lastZoomOutMtime) {
+        lastZoomOutMtime = data.zoom_out_mtime;
+        lastFocoMtime = data.foco_mtime;
+        refreshZoomOutBackdrop();
+      }
+      // Fase 3 (PDF NuevoGUI): qué imagen mostrar de fondo en el
+      // touchpad virtual -- misma "pantalla" que el puntero verde del
+      // GUI de escritorio (ver get_board_state en command_router.py).
+      const viewChanged = data.view !== currentView || data.cell !== currentCell;
+      currentView = data.view || 'tablero';
+      currentCell = data.cell != null ? data.cell : null;
+      // Origen de selección fijado en el PC: el punto pasa a amarillo.
+      // Ver command_router.get_board_state y _seleccion_fijar_origen.
+      if (touchpadPointer) {
+        touchpadPointer.classList.toggle('seleccionando', !!data.seleccion);
+      }
+      const casillaChanged = data.has_casilla && data.casilla_mtime !== lastCasillaMtime;
+      if (casillaChanged) lastCasillaMtime = data.casilla_mtime;
+      pendingTtsId = data.tts_id || 0;
+      const tableroChanged = data.has_tablero && data.mtime !== lastTableroMtime;
+      if (tableroChanged) lastTableroMtime = data.mtime;
+      if (viewChanged || casillaChanged ||
+          (currentView === 'tablero' && tableroChanged) ||
+          (currentView === 'zoom_out' && data.zoom_out_mtime !== lastZoomOutMtime) ||
+          (currentView === 'foco' && data.foco_mtime !== lastFocoMtime)) {
+        updateTouchpadBackground();
+      }
+    } catch (e) {
+      // fallo de red puntual: no pasa nada, se reintenta en la siguiente acción
+    }
+  }
+
+  // --- Voz de VoiceController en el móvil ---------------------------
+  // El PC dice cosas en alto (la ayuda, "no te entiendo" -- ver tts.py) y
+  // aquí se reproduce lo mismo, para poder oírlo cuando se está usando el
+  // móvil como micrófono y lejos del ordenador.
+  //
+  // CUÁNDO: solo en el HUECO ENTRE TROZOS de grabación, con el micrófono
+  // ya parado (ver stopBtn.onclick). Si sonara con el micrófono abierto,
+  // el móvil se grabaría a sí mismo y le mandaría al PC la voz de
+  // VoiceController como si fuera una orden del usuario.
+  //
+  // CÓMO: sin ningún sondeo nuevo. El id viaja dentro de /board/info, que
+  // el móvil ya consulta en ese mismo hueco -- una petición de más aquí
+  // volvería a competir con el audio y a provocar los cortes que costó
+  // tanto quitar (ver el comentario grande de arriba).
+  let pendingTtsId = 0;
+
+  async function maybePlayTts() {
+    if (!credentials || !pendingTtsId) return;
+    if (lastTtsId === null) {
+      // primera vez que sabemos el id: se toma como punto de partida sin
+      // reproducir nada, para no soltar de golpe al abrir la página lo
+      // último que dijera el PC hace un rato
+      lastTtsId = pendingTtsId;
+      return;
+    }
+    if (pendingTtsId === lastTtsId) return;
+    lastTtsId = pendingTtsId;
+    try {
+      const resp = await fetch('/tts/latest.wav?t=' + Date.now(), { headers: authHeader() });
+      if (!resp.ok) return;
+      const url = URL.createObjectURL(await resp.blob());
+      const audio = new Audio(url);
+      // se espera a que TERMINE antes de devolver el control: quien llama
+      // reanuda la grabación justo después, y el micrófono no debe
+      // abrirse mientras todavía suena
+      await new Promise((resolve) => {
+        audio.onended = audio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.play().catch(() => { URL.revokeObjectURL(url); resolve(); });
+      });
+    } catch (e) {
+      // fallo puntual: el siguiente aviso se intentará igual
+    }
+  }
+
+  function scheduleBoardRefresh() {
+    setTimeout(pollBoardInfo, POST_ACTION_REFRESH_DELAY_MS);
+    // Red de seguridad: vc.png se recaptura en gui.py cada
+    // config.VC_SNAPSHOT_POLL_MS=400ms, en un temporizador APARTE de la
+    // propia acción -- así que el check a los 500ms puede llegar justo
+    // antes de que esa captura termine de escribirse en disco y no
+    // detectar el cambio, sin ningún reintento posterior (de ahí que
+    // antes hiciera falta pulsar "Actualizar" a mano). Con este segundo
+    // check, pasados ~2-3 ciclos de captura (1200ms), se pilla seguro --
+    // sigue siendo puntual/event-driven, no sondeo continuo, así que no
+    // interfiere con el audio.
+    setTimeout(pollBoardInfo, POST_ACTION_REFRESH_DELAY_MS + 700);
+  }
+
+  function startBoardPolling() {
+    stopBoardPolling();
+    pollBoardInfo();  // una comprobación inicial al iniciar sesión
+    if (ENABLE_CONTINUOUS_POLLING) {
+      boardPollTimer = setInterval(pollBoardInfo, CONTINUOUS_POLL_INTERVAL_MS);
+    }
+  }
+
+  function stopBoardPolling() {
+    if (boardPollTimer) {
+      clearInterval(boardPollTimer);
+      boardPollTimer = null;
+    }
+  }
+
+  // --- Toque fiable sin scroll -----------------------------------------
+  // touch-action:none en CSS (ver <style> arriba) no bastaba por sí solo
+  // en todos los navegadores/WebViews: en algunos, evita el scroll pero
+  // también se traga el 'click' sintético que normalmente sigue al toque
+  // -- de ahí que el táctil dejara de responder del todo. wireTap()
+  // maneja el toque a mano: touchstart/touchmove con preventDefault()
+  // paran cualquier gesto de scroll ANTES de que el navegador llegue a
+  // interpretarlo, y touchend dispara la acción directamente (sin
+  // esperar al 'click' sintético, que también se cancela con
+  // preventDefault para que no se dispare dos veces). El listener
+  // 'click' normal se deja como respaldo para ratón/escritorio -- un
+  // pequeño margen de tiempo evita que se ejecute dos veces si el
+  // navegador sí llega a disparar el click sintético pese al
+  // preventDefault.
+  function wireTap(el, handler) {
+    // Lo PRIMERO, y no es opcional: sin touch-action:none el navegador
+    // puede decidir que el toque es el principio de un desplazamiento de la
+    // pagina y CANCELAR la secuencia tactil (touchcancel en vez de
+    // touchend). Como aqui solo se escucha touchend, el manejador no llega
+    // a ejecutarse; y el clic sintetico de respaldo tampoco, porque abajo
+    // se hace preventDefault() en touchstart. Pulsas y no pasa nada, sin
+    // error y sin rastro en el log del PC.
+    //
+    // Se pone AQUI y no en el CSS a proposito. En el CSS habria que
+    // acordarse en cada clase de boton que use wireTap, y ya fallo en dos:
+    // los de clic del touchpad y el de "Actualizar". Poniendolo en la
+    // funcion, queda cubierto todo lo que se enganche por aqui, incluido lo
+    // que se anada mañana.
+    el.style.touchAction = 'none';
+    let touchFiredAt = 0;
+    el.addEventListener('touchstart', (ev) => {
+      ev.preventDefault();
+    }, { passive: false });
+    el.addEventListener('touchmove', (ev) => {
+      ev.preventDefault();
+    }, { passive: false });
+    el.addEventListener('touchend', (ev) => {
+      ev.preventDefault();
+      touchFiredAt = Date.now();
+      handler();
+    }, { passive: false });
+    // Red de seguridad por si algun navegador cancela el toque de todas
+    // formas (ver touch-action en .touchpad-btn): al cancelarse NO llega
+    // touchend, asi que no se ha hecho nada. Se borra la marca para que, si
+    // el navegador acaba mandando el clic sintetico, ese si pueda actuar en
+    // vez de descartarse por "ya disparado".
+    el.addEventListener('touchcancel', () => { touchFiredAt = 0; });
+    el.addEventListener('click', () => {
+      if (Date.now() - touchFiredAt < 600) return;  // ya disparado por touchend
+      handler();
+    });
+  }
+
+
+  wireTap(boardRefreshBtn, () => { refreshBoard(); pollBoardInfo(); });
+
+  // --- Fase 3 (PDF NuevoGUI): touchpad virtual -- el punto ROJO se
+  // mueve 100% del lado del CLIENTE (arrastrar NO manda nada por red)
+  // sobre la imagen de fondo que el PC esté mostrando ahora mismo
+  // (tablero/zoom_out/casilla, ver currentView/currentCell más arriba,
+  // actualizados por pollBoardInfo()). Solo al CONFIRMAR (toque corto,
+  // dos dedos, o los botones Izquierdo/Derecho) se manda UNA petición
+  // a /board/virtual_action con la posición ya calculada -- igual que
+  // el puntero verde del GUI, que tampoco mueve el cursor real hasta
+  // confirmar (ver actions.fire_virtual_action). ---
+  const touchpadArea = document.getElementById('touchpadArea');
+  const touchpadBg = document.getElementById('touchpadBg');
+  const touchpadPointer = document.getElementById('touchpadPointer');
+  const touchpadPlaceholder = document.getElementById('touchpadPlaceholder');
+  const TOUCHPAD_TAP_MAX_MOVE = 12;  // px de pantalla; por debajo, se cuenta como "toque" (clic), no arrastre
+  const TOUCHPAD_TAP_MAX_MS = 300;
+
+  // El puntero arranca CENTRADO (0.5, 0.5) -- mismo criterio que el
+  // puntero verde del GUI (ver command_router._enter_zoom_out_interactive):
+  // un punto de referencia fiable y consistente, sin extrapolar nada.
+  let pointerFx = 0.5, pointerFy = 0.5;
+  let pointerVisible = false;
+  let tpStartX = 0, tpStartY = 0, tpTotalMove = 0, tpStartTime = 0, tpTouchCount = 1;
+
+  function updateTouchpadBackground() {
+    // Las TRES vistas tienen imagen, incluida "tablero" (la pantalla
+    // inicial): ahí se muestra tablero.png -- el escritorio ENTERO, la
+    // misma imagen que el GUI de escritorio pinta en su parte central.
+    // Antes esta vista no mostraba nada ("🖐 Arrastra aquí") y había que
+    // elegir casilla desde el PC antes de poder usar el touchpad para
+    // algo; ahora se puede apuntar directamente sobre el escritorio
+    // completo. El cálculo de la posición real ya contemplaba este caso
+    // desde la Fase 1 (board.virtual_pointer_to_real_position, view
+    // "tablero": la fracción se aplica al escritorio entero y `cell` se
+    // ignora), así que no hace falta nada nuevo del lado del servidor.
+    const file = currentView === 'casilla' ? 'casilla.png'
+               : currentView === 'zoom_out' ? 'zoom_out.png'
+               : currentView === 'foco' ? 'foco.png'
+               : 'tablero.png';
+    touchpadBg.onerror = () => {
+      // aún no hay captura de esa imagen en el PC (p.ej. tablero.png
+      // antes de la primera acción): se deja el aviso "Arrastra aquí"
+      // en vez de un hueco roto
+      touchpadBg.classList.remove('show');
+      touchpadPointer.classList.remove('show');
+      touchpadPlaceholder.classList.remove('hide');
+      pointerVisible = false;
+    };
+    touchpadBg.onload = () => {
+      touchpadBg.classList.add('show');
+      touchpadPlaceholder.classList.add('hide');
+      // recentra el punto rojo al cambiar de imagen -- igual que el
+      // puntero verde del GUI, que también arranca centrado en cada
+      // "mover <n>" nuevo (ver Actualización 18)
+      pointerFx = 0.5;
+      pointerFy = 0.5;
+      updatePointerVisual();
+    };
+    cargarImagenProtegida(`/board/${file}?t=${Date.now()}`)
+      .then((b) => { touchpadBg.src = _ponerBlob('touchpad', b); })
+      .catch(() => {
+        touchpadBg.classList.remove('show');
+        touchpadPointer.classList.remove('show');
+        touchpadPlaceholder.classList.remove('hide');
+        pointerVisible = false;
+      });
+  }
+
+  // Rectángulo REAL donde se pinta la imagen dentro de touchpadArea --
+  // con object-fit:contain la imagen no siempre llena el contenedor
+  // (barras a los lados si la proporción no coincide), así que hay que
+  // calcularlo a mano para que fx/fy sean exactos -- mismo problema
+  // que resuelve gui.py (_do_touch_track, pad_x/pad_y) del lado del GUI.
+  function getImageDisplayRect() {
+    const cw = touchpadArea.clientWidth, ch = touchpadArea.clientHeight;
+    const iw = touchpadBg.naturalWidth, ih = touchpadBg.naturalHeight;
+    if (!iw || !ih) return { left: 0, top: 0, width: cw, height: ch };
+    const scale = Math.min(cw / iw, ch / ih);
+    const width = iw * scale, height = ih * scale;
+    return { left: (cw - width) / 2, top: (ch - height) / 2, width, height };
+  }
+
+  function updatePointerVisual() {
+    if (!pointerVisible) return;
+    const r = getImageDisplayRect();
+    touchpadPointer.style.left = (r.left + pointerFx * r.width) + 'px';
+    touchpadPointer.style.top = (r.top + pointerFy * r.height) + 'px';
+    touchpadPointer.classList.add('show');
+  }
+
+  function updatePointerFromClient(clientX, clientY) {
+    const rect = touchpadArea.getBoundingClientRect();
+    const r = getImageDisplayRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    if (r.width <= 0 || r.height <= 0) return;
+    pointerFx = Math.min(Math.max((localX - r.left) / r.width, 0), 1);
+    pointerFy = Math.min(Math.max((localY - r.top) / r.height, 0), 1);
+    pointerVisible = true;
+    updatePointerVisual();
+  }
+
+
+  // ---------------------------------------------------------------
+  // Modo cara: mover el puntero rojo con la cabeza
+  // ---------------------------------------------------------------
+  //
+  // Pensado para quien no puede usar las manos. La camara del MOVIL detecta
+  // la cara, y de ahi sale la posicion del puntero; los clics siguen siendo
+  // por voz o por los botones, que es mas fiable que inventarse gestos --
+  // un parpadeo o una mueca dan falsos positivos a todas horas.
+  //
+  // LA IMAGEN NO SALE DEL TELEFONO. Se detecta aqui mismo y al PC solo
+  // viajan las coordenadas, igual que si se hubiera arrastrado el dedo.
+  // Ademas de ser lo correcto, es lo que hace esto viable por red.
+  //
+  // Va a 6-7 fotogramas por segundo en un movil modesto, y basta: la cabeza
+  // se mueve despacio. Se probo antes con la malla de 468 puntos y daba la
+  // misma velocidad, asi que se usa el detector ligero (230 KB, no 3,6 MB).
+
+  let caraActiva = false, caraDetector = null, caraStream = null;
+  let caraCentroX = null, caraCentroY = null;
+  let caraSuaveX = 0.5, caraSuaveY = 0.5;
+  let caraUltimoTiempo = -1;
+  let caraUltimoMs = 0;
+  const caraEstado = { x: {crudo: null, filtrado: null},
+                       y: {crudo: null, filtrado: null} };
+
+  // El filtro. Se guarda por eje: cada uno se mueve a su ritmo.
+  function caraFiltrar(valor, dt, eje) {
+    const e = caraEstado[eje];
+    if (e.filtrado === null) { e.crudo = valor; e.filtrado = valor; return valor; }
+    const velocidad = Math.abs(valor - e.crudo) / dt;
+    e.crudo = valor;
+    // A mas velocidad, corte mas alto = menos suavizado = mas respuesta.
+    const corte = CARA_CORTE_MINIMO + CARA_BETA * velocidad;
+    const tau = 1 / (2 * Math.PI * corte);
+    const alfa = 1 / (1 + tau / dt);
+    e.filtrado = e.filtrado + alfa * (valor - e.filtrado);
+    return e.filtrado;
+  }
+
+  // Cuanto se amplifica el movimiento de la cabeza. Con 4, moverla un 12%
+  // del encuadre recorre la pantalla entera -- mas que eso obliga a girar el
+  // cuello de forma incomoda.
+  const CARA_GANANCIA = 4.0;
+  // FILTRO ADAPTATIVO (un "filtro de un euro", como se le llama).
+  //
+  // El primer intento usaba una zona muerta sobre la distancia al centro y un
+  // suavizado fijo. Temblaba, y con razon: la zona muerta solo actuaba cerca
+  // del centro, asi que al apartarse un poco el temblor natural se amplificaba
+  // por la ganancia. Y un suavizado fijo o deja temblor o vuelve el puntero
+  // pastoso -- no hay un numero que valga para las dos cosas.
+  //
+  // Lo que se usa en punteros de verdad: suavizar MUCHO cuando el movimiento
+  // es lento (que es cuando estas apuntando y quieres precision) y POCO cuando
+  // es rapido (que es cuando quieres llegar a otro sitio). El filtro se adapta
+  // solo mirando la velocidad.
+  //
+  // CARA_CORTE_MINIMO: mas bajo = mas quieto parado, y mas tarda en arrancar.
+  // CARA_BETA: mas alto = antes se suelta al moverte rapido.
+  const CARA_CORTE_MINIMO = 0.6;
+  const CARA_BETA = 1.2;
+
+  // PEGAJOSIDAD. Lo que de verdad hacia falta, y no se vio hasta probarlo:
+  // el temblor no viene de la cabeza, viene de LA MANO QUE SUJETA EL MOVIL.
+  // El detector mide la cara respecto a la camara, asi que si la camara se
+  // mueve, el puntero se mueve aunque tu estes quieto.
+  //
+  // Contra eso el suavizado no puede: no es ruido, es movimiento real. Lo que
+  // sirve es que el puntero se quede PEGADO donde esta mientras el movimiento
+  // sea pequeño, y solo se despegue cuando de verdad quieres ir a otro sitio.
+  // Sin esto no hay forma de dejarlo encima de un boton para pulsarlo.
+  //
+  // Es una fraccion del area: 0.06 = un 6% de la anchura.
+  const CARA_PEGAJOSIDAD = 0.06;
+  // Cuanto se acerca el puntero al objetivo, por fotograma, cuando el
+  // movimiento cae DENTRO de esa zona. No es un suavizado mas: es lo que
+  // distingue el pulso (que oscila y se compensa solo) de una correccion
+  // pequeña pero sostenida (que se acumula). Ver caraBucle().
+  const CARA_DERIVA = 0.15;
+  // La camara frontal se ve en espejo: sin invertir, mover la cabeza a la
+  // derecha llevaria el puntero a la izquierda.
+  const CARA_INVERTIR_X = true;
+  // Los seis puntos del detector: 0 ojo izq, 1 ojo der, 2 NARIZ, 3 boca,
+  // 4 oreja izq, 5 oreja der.
+  const CARA_NARIZ = 2;
+
+  async function caraArrancar() {
+    status.textContent = 'Cargando detector de cara...';
+    const { FaceDetector, FilesetResolver } =
+      await import('/vendor/mediapipe/vision_bundle.mjs');
+    const fileset = await FilesetResolver.forVisionTasks('/vendor/mediapipe/wasm');
+    caraDetector = await FaceDetector.createFromOptions(fileset, {
+      baseOptions: {
+        modelAssetPath: '/vendor/mediapipe/blaze_face_short_range.tflite',
+        delegate: 'GPU'
+      },
+      runningMode: 'VIDEO'
+    });
+    caraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: 320, height: 240 }, audio: false
+    });
+    const v = document.getElementById('caraVideo');
+    v.srcObject = caraStream;
+    await v.play();
+    // El centro se toma DONDE ESTE LA CABEZA AHORA, no en el medio del
+    // encuadre: nadie se coloca centrado, y obligar a ello seria una barrera
+    // mas en un programa que viene a quitarlas.
+    caraCentroX = caraCentroY = null;
+    requestAnimationFrame(caraBucle);
+  }
+
+  function caraParar() {
+    caraActiva = false;
+    if (caraStream) {
+      try { caraStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+      caraStream = null;
+    }
+    const b = document.getElementById('btnCara');
+    if (b) b.textContent = 'Modo cara';
+    status.textContent = 'Modo cara apagado';
+  }
+
+  function caraBucle() {
+    if (!caraActiva) return;
+    const v = document.getElementById('caraVideo');
+    if (caraDetector && v && v.readyState >= 2 && v.currentTime !== caraUltimoTiempo) {
+      caraUltimoTiempo = v.currentTime;
+      let det = null;
+      try {
+        const r = caraDetector.detectForVideo(v, performance.now());
+        det = r.detections && r.detections[0];
+      } catch (e) { }
+      if (det && det.keypoints && det.keypoints.length > CARA_NARIZ) {
+        const n = det.keypoints[CARA_NARIZ];
+        if (caraCentroX === null) {
+          caraCentroX = n.x; caraCentroY = n.y;
+          status.textContent = 'Modo cara: mueve la cabeza';
+        }
+        let dx = n.x - caraCentroX;
+        let dy = n.y - caraCentroY;
+        if (CARA_INVERTIR_X) dx = -dx;
+        const objX = Math.min(Math.max(0.5 + dx * CARA_GANANCIA, 0), 1);
+        const objY = Math.min(Math.max(0.5 + dy * CARA_GANANCIA, 0), 1);
+        const ahora = performance.now();
+        const dt = caraUltimoMs ? Math.max((ahora - caraUltimoMs) / 1000, 0.001) : 0.15;
+        caraUltimoMs = ahora;
+        const filtX = caraFiltrar(objX, dt, 'x');
+        const filtY = caraFiltrar(objY, dt, 'y');
+        // Se mide la distancia en linea recta, no por ejes: si no, el puntero
+        // se movería en cruz y se nota raro.
+        const salto = Math.hypot(filtX - caraSuaveX, filtY - caraSuaveY);
+
+        // Antes esto era todo o nada: por debajo del 6% el puntero no se movia
+        // NADA, y al pasarlo saltaba entero al sitio nuevo. De ahi las dos
+        // pegas que se notaban: cuesta arrancarlo, y cuando arranca se pasa,
+        // asi que no habia forma de afinar sobre un boton pequeño.
+        //
+        // Ahora hay dos regimenes, y la diferencia entre temblor e intencion
+        // no se busca en el TAMAÑO del movimiento -- son parecidos -- sino en
+        // que el temblor VA Y VIENE y la intencion se sostiene.
+        if (salto > CARA_PEGAJOSIDAD) {
+          // Movimiento de verdad: se avanza lo que EXCEDE la zona, no el salto
+          // entero. Justo en el borde no se mueve, y lejos sigue al detalle.
+          // Sin escalones, que es lo que se notaba como brinco.
+          const parte = (salto - CARA_PEGAJOSIDAD) / salto;
+          caraSuaveX += (filtX - caraSuaveX) * parte;
+          caraSuaveY += (filtY - caraSuaveY) * parte;
+        } else {
+          // Por debajo de la zona, deriva LENTA en vez de quieto del todo.
+          // Un temblor que oscila se compensa solo (tira a un lado y al otro,
+          // y la suma se queda en nada); un desplazamiento sostenido se
+          // acumula y acaba llegando.
+          //
+          // Medido en simulacion con un temblor de 0,012 y una correccion
+          // sostenida de 0,020:
+          //     antes        temblor 0,0000  correccion NO LLEGA NUNCA
+          //     deriva 0,08  temblor 0,0010  correccion se queda en 0,808
+          //     deriva 0,15  temblor 0,0018  correccion llega a 0,817
+          //     deriva 0,25  temblor 0,0030  correccion llega a 0,820
+          // 0,15 deja el temblor en un 0,2% de la pantalla -- invisible -- y
+          // permite colocar el puntero donde uno quiere.
+          caraSuaveX += (filtX - caraSuaveX) * CARA_DERIVA;
+          caraSuaveY += (filtY - caraSuaveY) * CARA_DERIVA;
+        }
+        pointerFx = caraSuaveX;
+        pointerFy = caraSuaveY;
+        pointerVisible = true;
+        updatePointerVisual();
+        avisarPunteroAlPc();
+      }
+    }
+    requestAnimationFrame(caraBucle);
+  }
+
+  // Se le dice al PC donde esta el punto rojo, para poder actuar ahi por voz
+  // ("pulsa rojo"). Solo cuando se mueve de verdad y como mucho cuatro veces
+  // por segundo: son dos numeros, pero no hace falta inundar la red.
+  let ultimoAvisoPc = 0, ultimoAvisoFx = -1, ultimoAvisoFy = -1;
+  function avisarPunteroAlPc() {
+    const ahora = Date.now();
+    if (ahora - ultimoAvisoPc < 250) return;
+    if (Math.abs(pointerFx - ultimoAvisoFx) < 0.005 &&
+        Math.abs(pointerFy - ultimoAvisoFy) < 0.005) return;
+    ultimoAvisoPc = ahora;
+    ultimoAvisoFx = pointerFx;
+    ultimoAvisoFy = pointerFy;
+    fetch('/board/pointer', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeader()),
+      body: JSON.stringify({ fx: pointerFx, fy: pointerFy })
+    }).catch(() => {});
+  }
+
+  async function caraAlternar() {
+    if (caraActiva) { caraParar(); return; }
+    caraActiva = true;
+    const b = document.getElementById('btnCara');
+    try {
+      await caraArrancar();
+      if (b) b.textContent = 'Apagar cara';
+    } catch (err) {
+      caraActiva = false;
+      if (b) b.textContent = 'Modo cara';
+      status.className = 'status-error';
+      status.textContent = 'No se pudo activar el modo cara: ' +
+                           (err && err.name ? err.name : err);
+    }
+  }
+
+  // Volver a tomar como centro la posicion actual de la cabeza. Hace falta de
+  // verdad: uno se recoloca en la silla y el puntero se queda corrido.
+  function caraCentrar() {
+    caraCentroX = caraCentroY = null;
+    caraEstado.x.filtrado = caraEstado.y.filtrado = null;
+    caraEstado.x.crudo = caraEstado.y.crudo = null;
+    status.textContent = 'Centro recolocado';
+  }
+
+  async function confirmAction(kind) {
+    // En la vista "tablero" no hay casilla seleccionada y no hace falta:
+    // el servidor ignora `cell` para esa vista (ver
+    // board.virtual_pointer_to_real_position) -- se manda igualmente
+    // para no cambiar la forma del cuerpo de la petición.
+    // NINGUN camino de aqui puede quedarse callado.
+    //
+    // El 5-sep-2026 se perdieron unos clics y costo media hora averiguar por
+    // que, porque los dos modos de fallar eran un `return` mudo: sin sesion
+    // no se hacia nada, y si la peticion fallaba se tragaba el error. Desde
+    // fuera, identico: pulsas y no pasa nada. Y desde el log del PC tampoco
+    // se ve, porque justamente lo que falla es que la peticion NO SALE.
+    //
+    // Quien usa esto no ve la pantalla del ordenador: un boton que no hace
+    // nada y no dice nada le deja sin informacion ninguna.
+    if (!credentials) {
+      status.className = 'status-error';
+      status.textContent = '✗ Sin sesión: entra con tu usuario antes de pulsar';
+      return;
+    }
+    try {
+      const r = await fetch('/board/virtual_action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ fx: pointerFx, fy: pointerFy, kind, view: currentView, cell: currentCell }),
+      });
+      // 409 = el PC esta en espera, pidiendo el santo y sena, o bloqueado.
+      // Hay que DECIRLO: antes la accion simplemente no ocurria y desde el
+      // movil no habia forma de saber por que. Un toque que no hace nada y
+      // no explica nada es lo peor que puede pasarle a quien no ve la
+      // pantalla del ordenador.
+      if (r.status === 409) {
+        const d = await r.json().catch(() => ({}));
+        status.textContent = '🔒 ' + (d.error || 'El ordenador no está atendiendo ahora');
+      }
+    } catch (err) {
+      // Antes esto se tragaba el error sin decir nada. No hay nada que
+      // deshacer -- el estado se corrige solo en el siguiente
+      // pollBoardInfo() -- pero SI hay que contarlo: es la diferencia entre
+      // "el PC no me hace caso" y "el clic no ha llegado a salir".
+      status.className = 'status-error';
+      status.textContent = '✗ El clic no salió: ' +
+                           ((err && err.name) ? err.name : 'fallo de red');
+    }
+    scheduleBoardRefresh();
+  }
+
+  const btnCara = document.getElementById('btnCara');
+  if (btnCara) btnCara.onclick = caraAlternar;
+  const btnCentrarCara = document.getElementById('btnCentrarCara');
+  if (btnCentrarCara) btnCentrarCara.onclick = caraCentrar;
+
+  if (touchpadArea) {
+    touchpadArea.addEventListener('touchstart', (ev) => {
+      if (!credentials) return;
+      ev.preventDefault();
+      const t = ev.touches[0];
+      tpStartX = t.clientX;
+      tpStartY = t.clientY;
+      tpTotalMove = 0;
+      tpStartTime = Date.now();
+      tpTouchCount = ev.touches.length;
+      touchpadArea.classList.add('active');
+      updatePointerFromClient(t.clientX, t.clientY);
+    }, { passive: false });
+
+    touchpadArea.addEventListener('touchmove', (ev) => {
+      if (!credentials) return;
+      ev.preventDefault();
+      const t = ev.touches[0];
+      tpTotalMove += Math.abs(t.clientX - tpStartX) + Math.abs(t.clientY - tpStartY);
+      tpStartX = t.clientX;
+      tpStartY = t.clientY;
+      tpTouchCount = Math.max(tpTouchCount, ev.touches.length);
+      updatePointerFromClient(t.clientX, t.clientY);  // solo dibuja -- CERO red aquí
+    }, { passive: false });
+
+    touchpadArea.addEventListener('touchend', (ev) => {
+      if (!credentials) return;
+      ev.preventDefault();
+      touchpadArea.classList.remove('active');
+      const elapsed = Date.now() - tpStartTime;
+      if (tpTotalMove < TOUCHPAD_TAP_MAX_MOVE && elapsed < TOUCHPAD_TAP_MAX_MS) {
+        confirmAction(tpTouchCount >= 2 ? 'click_right' : 'click');
+      }
+    }, { passive: false });
+  }
+
+  // --- Botones explícitos izquierdo/derecho, como los de un touchpad
+  // físico -- alternativa fiable al toque con 1/2 dedos, por si ese
+  // gesto no se detecta bien en algún móvil concreto. Confirman la
+  // acción en la posición ACTUAL del punto rojo. ---
+  const tpBtnLeft = document.getElementById('tpBtnLeft');
+  const tpBtnRight = document.getElementById('tpBtnRight');
+  if (tpBtnLeft) wireTap(tpBtnLeft, () => confirmAction('click'));
+  if (tpBtnRight) wireTap(tpBtnRight, () => confirmAction('click_right'));
+
+  // --- Arranque automático cuando hay que identificarse ----------------
+  // Si el PC está esperando el santo y seña, lo único que se puede hacer
+  // desde aquí es hablar: obligar a pulsar "Grabar" antes es un paso
+  // muerto, y encima se pierde la frase de quien la diga sin darse cuenta
+  // de que el micrófono estaba parado.
+  //
+  // getUserMedia necesita permiso, no necesariamente un toque nuevo: si ya
+  // se concedió para este sitio (o si se está dentro de la APK, que lo
+  // concede sola), arranca sin más. Si el navegador lo rechaza, NO se
+  // insiste: se deja el botón y se dice por qué.
+  async function arrancarSiHayQueIdentificarse() {
+    if (!credentials || recorder) return;
+    try {
+      const resp = await fetch('/board/info', { headers: authHeader() });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data.awaiting_login && !data.standby) return;
+      status.className = 'status-recording';
+      status.textContent = data.standby
+        ? '😴 En espera: di tu santo y seña'
+        : '🔐 Santo y seña: di tu frase';
+      await startBtn.onclick();
+    } catch (e) {
+      status.className = '';
+      status.textContent = 'Pulsa "Grabar" y di tu frase';
+    }
+  }
+
+  loadCredentials().then((ok) => {
+    if (!ok) return;
+    status.className = 'status-sent';
+    status.textContent = '✓ Sesión restaurada';
+    arrancarSiHayQueIdentificarse();
+  });
+
+})();
+</script>
+</body>
+</html>
