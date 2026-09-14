@@ -147,6 +147,15 @@ class SpeakerVerifier:
         elif mode is False:
             mode = self.COMMAND
         if mode == self.LOGIN:
+            # El movil tiene su PROPIO minimo (14-sep-2026). Su micro puntua
+            # bastante mas bajo que el del PC, y con uno solo para los dos, la
+            # calibracion del PC (0,60 en la VM de pruebas) dejaba al movil sin
+            # poder identificarse ni despertar de la espera: medido, su santo y
+            # sena daba 0,566.
+            if self.source == "network":
+                propio = getattr(config, "VOICE_LOGIN_THRESHOLD_NETWORK", None)
+                if propio is not None:
+                    return propio
             return getattr(config, "VOICE_LOGIN_THRESHOLD",
                            config.SPEAKER_ID_THRESHOLD_DICTATION)
         if mode == self.DICTATION:

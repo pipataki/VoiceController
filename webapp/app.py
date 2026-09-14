@@ -159,8 +159,13 @@ _network_watchdog_started = False
 # vigilante cortaba la sesión ANTES de que llegara el siguiente trozo:
 # en el log real, "vuelto al micrófono local (sin audio durante 12s)" una
 # y otra vez, justo mientras se intentaba dar el santo y seña. 25 s deja
-# margen de sobra para un trozo de 15 s más su subida.
+# margen para un trozo de 15 s más su subida... pero solo 10 s, y en la VM
+# de pruebas (14-sep-2026) no bastó: saltó una y otra vez mientras se daba
+# el santo y seña, también en espera, donde desde ese día se usan los trozos
+# de 15 s. Por eso el límite depende de los trozos: 25 s con los de 5 s, y
+# 40 s cuando el móvil manda los de 15 (awaiting_login, ver _limite_vigilante).
 NETWORK_AUDIO_WATCHDOG_TIMEOUT_S = 25.0
+NETWORK_AUDIO_WATCHDOG_TIMEOUT_LOGIN_S = 40.0
 NETWORK_AUDIO_WATCHDOG_POLL_S = 2.0
 
 
@@ -375,12 +380,22 @@ def _release_network_mic(reason: str):
     _switched_to_network = False
 
 
+def _limite_vigilante() -> float:
+    """Cuánto se espera sin audio del móvil antes de soltarlo. Más con los
+    trozos largos, que el móvil usa justo cuando awaiting_login (ver
+    index.html): el mismo dato decide los trozos y el límite."""
+    if _session_state().get("awaiting_login"):
+        return NETWORK_AUDIO_WATCHDOG_TIMEOUT_LOGIN_S
+    return NETWORK_AUDIO_WATCHDOG_TIMEOUT_S
+
+
 def _network_audio_watchdog():
     while True:
         time.sleep(NETWORK_AUDIO_WATCHDOG_POLL_S)
-        if _switched_to_network and (time.time() - _last_network_audio_ts) > NETWORK_AUDIO_WATCHDOG_TIMEOUT_S:
+        limite = _limite_vigilante()
+        if _switched_to_network and (time.time() - _last_network_audio_ts) > limite:
             _release_network_mic("sin audio del móvil durante "
-                                  f"{NETWORK_AUDIO_WATCHDOG_TIMEOUT_S:.0f}s -- vigilante")
+                                  f"{limite:.0f}s -- vigilante")
 
 
 def _ensure_network_watchdog_started():

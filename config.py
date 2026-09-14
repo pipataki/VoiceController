@@ -477,6 +477,15 @@ VOICE_LOGIN_HINT = "La lluvia en Sevilla es una maravilla"
 # podía heredar el umbral de dictado.
 VOICE_LOGIN_THRESHOLD = 0.44
 
+# El mismo umbral, pero para el santo y seña dicho al MÓVIL. Aparte desde el
+# 14-sep-2026: el micro del móvil puntúa bastante más bajo que el del PC, y
+# con uno solo para los dos, lo que calibre el PC deja fuera al móvil. En la
+# VM de pruebas la calibración puso 0,60 (con su micro) y el santo y seña del
+# móvil daba 0,566: ni se identificaba a la primera ni podía despertar de la
+# espera. 0,44 queda, como el del PC, por encima de la peor voz ajena medida
+# (0,346). Pon None para que el móvil use el mismo que el PC.
+VOICE_LOGIN_THRESHOLD_NETWORK = 0.44
+
 # Intentos FALLIDOS seguidos antes de abortar. Solo cuentan los intentos
 # REALES: alguien contesta con una frase verificable y no es él. El
 # silencio NO cuenta -- si no, irse quince minutos dejaría el ordenador
