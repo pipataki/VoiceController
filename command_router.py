@@ -349,6 +349,19 @@ _SENTENCE_PUNCTUATION = {
     "suggestion": "...",
 }
 
+# El tipo de frase A MANO, cuando prosody.py se equivoca: tras una pausa,
+# "interrogación"/"exclamación"/"afirmación"/"matemática" rehacen la ÚLTIMA
+# frase dictada (ver _reformatear_ultima_frase). Idea de pipataki
+# (15-sep-2026). Palabras elegidas porque casi nunca cierran una frase: el
+# rescate de la última palabra (ver on_final) tomaría como orden "tengo una
+# pregunta" o "esto es normal".
+_FORMATOS_A_MANO = {
+    "format_question": "question",
+    "format_exclamation": "exclamation",
+    "format_statement": "statement",
+    "format_math": "math",
+}
+
 
 def _humanize_chunk(text: str, sentence_type: str) -> str:
     """Da forma de frase "humana" a un fragmento dictado: primera letra en
@@ -473,6 +486,13 @@ class CommandRouter:
         self.gui = gui
         self.state = "IDLE"
         self.primary_buffer = ""     # Pre-Texto: lo que se está dictando ahora mismo
+        # El Pre-Texto justo ANTES de añadir la última frase: lo que venga
+        # detrás es esa frase (ver _reformatear_ultima_frase). None = ninguna.
+        self._antes_ultima_frase = None
+        # El Pre-Texto tal como lo dejó "matemática": mientras siga igual, la
+        # sugerencia de "¿lo paso a matemáticas?" no tiene nada que ofrecer
+        # (ver check_pause_suggestion).
+        self._formula_a_mano = None
         self.secondary_buffer = ""
         # palabra tal como se dictó ORIGINALMENTE, una entrada por cada
         # palabra de primary_buffer (mismo índice 1-based que usan
@@ -1276,6 +1296,53 @@ class CommandRouter:
         if DEBUG:
             print(f"[command_router] corregida ultima palabra -> Pre-Texto={self.primary_buffer!r}")
 
+    def _reformatear_ultima_frase(self, tipo: str):
+        """Rehace la ÚLTIMA frase del Pre-Texto con el tipo que se pide:
+        "question" (¿...?), "exclamation" (¡...!), "statement" (con punto) o
+        "math" (notación de fórmula, como el modo "deletrear").
+
+        Para cuando prosody.py se equivoca. La última frase es lo que haya
+        detrás de como estaba el Pre-Texto antes de añadirla
+        (_antes_ultima_frase): así aguanta un "corrige 3 mayúscula" dentro de
+        ella o un "corrige" que le quite la última palabra. Si lo de delante
+        ha cambiado, no se sabe dónde empieza, y no se toca nada.
+
+        Se puede repetir: la frase sigue siendo la última."""
+        antes = self._antes_ultima_frase
+        if antes is None or not self.primary_buffer.startswith(antes):
+            if DEBUG:
+                print("[command_router] formato a mano: no se sabe cuál es la última frase")
+            return
+        frase = self.primary_buffer[len(antes):].strip()
+        base = frase.lstrip("¿¡").rstrip(".?!…").strip()
+        if not base:
+            return
+        nueva = _mathematize_chunk(base) if tipo == "math" else _humanize_chunk(base, tipo)
+
+        n_antes = len(antes.split(" ")) if antes else 0
+        n_viejas = len(self.primary_buffer.split(" ")) - n_antes
+        self.primary_buffer = (antes + " " + nueva).strip() if antes else nueva.strip()
+        nuevas = self.primary_buffer.split(" ")[n_antes:]
+        # _word_origins lleva una entrada por palabra (ver _correct_word). Los
+        # signos no cambian cuántas hay; la fórmula sí, y entonces las de esta
+        # frase pasan a ser sus palabras nuevas, como en el modo fórmula.
+        if tipo == "math" or len(nuevas) != n_viejas:
+            quedan = max(0, len(self._word_origins) - n_viejas)
+            self._word_origins = self._word_origins[:quedan] + list(nuevas)
+        self._formula_a_mano = self.primary_buffer if tipo == "math" else None
+
+        if self.formuling:
+            try:
+                self.gui.update_pretexto_formuling(self.primary_buffer, preview="")
+            except Exception:
+                self.gui.update_pretexto(self.primary_buffer, preview="")
+        else:
+            self.gui.update_pretexto(self.primary_buffer, preview="")
+        self._clear_suggestion()
+        self._arm_text_suppression(0.4)
+        if DEBUG:
+            print(f"[command_router] última frase como {tipo}: {frase!r} -> {nueva.strip()!r}")
+
     def _correct_word(self, index: int, modifier: str, ambiguous: bool = False):
         """Corrige la palabra número `index` (1-based, contando por
         espacios sobre el Pre-Texto tal cual está ahora mismo) aplicando
@@ -1509,6 +1576,13 @@ class CommandRouter:
             return
         text = self.primary_buffer.strip()
         if not text:
+            self._clear_suggestion()
+            return
+
+        # Recién pasado a fórmula con "matemática": volver a convertirlo
+        # sacaba basura ("a + 3 = d" -> "a 3", 15-sep-2026). En cuanto se
+        # dicte algo nuevo, el Pre-Texto cambia y esto deja de aplicar.
+        if self._formula_a_mano is not None and self.primary_buffer == self._formula_a_mano:
             self._clear_suggestion()
             return
 
@@ -4488,6 +4562,19 @@ class CommandRouter:
         if control_action == "dismiss_suggestion":
             self._clear_suggestion()
             return
+        if control_action in _FORMATOS_A_MANO:
+            # Si Vosk juntó la frase con la orden ("vienes mañana
+            # interrogación"), lo de delante es la frase a formatear: se
+            # añade antes, igual que hace "entra" con su resto. Si no, la
+            # orden caería sobre la frase ANTERIOR.
+            if leftover_text:
+                self._antes_ultima_frase = self.primary_buffer
+                self.primary_buffer = (
+                    (self.primary_buffer + " " + leftover_text).strip() if self.primary_buffer else leftover_text
+                )
+                self._word_origins.extend(leftover_text.split(" "))
+            self._reformatear_ultima_frase(_FORMATOS_A_MANO[control_action])
+            return
         if control_action == "confirm":
             if leftover_text:
                 if self.formuling:
@@ -4519,6 +4606,7 @@ class CommandRouter:
             self._clear_suggestion()
             if self.formuling:
                 chunk = _mathematize_chunk(text, sentence_type)
+                self._antes_ultima_frase = self.primary_buffer   # ver _reformatear_ultima_frase
                 self.primary_buffer = (self.primary_buffer + " " + chunk).strip() if self.primary_buffer else chunk
                 # en modo fórmula no hay normalización de números/aprendizaje
                 # de correcciones (ver docstring del módulo), pero
@@ -4545,6 +4633,7 @@ class CommandRouter:
                 # sería "statement" por defecto y no se aplicaría nada raro)
                 chunk = _humanize_chunk(text, sentence_type)
                 chunk = self._apply_strict_corrections(chunk)
+                self._antes_ultima_frase = self.primary_buffer   # ver _reformatear_ultima_frase
                 self.primary_buffer = (self.primary_buffer + " " + chunk).strip() if self.primary_buffer else chunk
                 self.gui.update_pretexto(self.primary_buffer, preview="")
                 # _humanize_chunk/_apply_strict_corrections no cambian el

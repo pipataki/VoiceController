@@ -8,7 +8,7 @@ ordenador: tu voz no sale de él.
 - Funciona en **Linux** (KDE Plasma) y en **Windows**, con una app para
   **Android** que hace de micrófono y de mando.
 - Es **software libre**, con licencia LGPLv3.
-- Está en desarrollo: versión 0.2.2 (pre-alpha).
+- Está en desarrollo: versión 0.2.3 (pre-alpha).
 
 ## Descarga
 
@@ -35,7 +35,7 @@ Web: [pipataki.net](https://pipataki.net) · Correo:
 accessibility in mind.** It runs on Linux (KDE Plasma) and Windows, with an
 Android app as a remote microphone and touchpad. Speech recognition stays on
 your own computer. Free software (LGPLv3), currently in development
-(0.2.2, pre-alpha).
+(0.2.3, pre-alpha).
 
 - Download the installation package, with the Android app and the PDF manual,
   from [Releases](https://github.com/pipataki/VoiceController/releases).

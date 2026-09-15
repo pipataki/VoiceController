@@ -180,7 +180,7 @@ Sin casilla, zoom ni foco abiertos, arriba, abajo, izquierda y derecha son las f
 
 ## Dictar
 
-Con "dictar" empiezas: desde ahí, lo que dices va entero al Pre-Texto, como frase. Habla con normalidad: los signos de interrogación y de exclamación los pone el programa, y los números salen en cifras. Mientras dictas valen solo las órdenes de abajo, dichas tras una pausa.
+Con "dictar" empiezas: desde ahí, lo que dices va entero al Pre-Texto, como frase. Habla con normalidad: los signos de interrogación y de exclamación los pone el programa, y los números salen en cifras. Si se equivoca, "interrogación", "exclamación", "afirmación" o "matemática" rehacen la última frase. Mientras dictas valen solo las órdenes de abajo, dichas tras una pausa.
 
 | Di | También vale | Qué hace |
 |---|---|---|
@@ -189,6 +189,10 @@ Con "dictar" empiezas: desde ahí, lo que dices va entero al Pre-Texto, como fra
 | **`borra`** | `reset`, `erase`, `borrar` | borra el Pre-Texto y empieza de cero |
 | **`corrige`** | `corregir`, `correct`, `fix` | corrige una palabra: 'corrige &lt;nº&gt; &lt;mayúscula/siglas/cifras...&gt;' |
 | **`corrige <número> <cómo>`** |  | cambia esa palabra del Pre-Texto: mayúscula, minúscula, siglas, cifras o letras. "corrige 3 mayúscula" |
+| **`interrogación`** | `question` | la última frase, como pregunta: ¿...? |
+| **`exclamación`** | `exclamation` | la última frase, como exclamación: ¡...! |
+| **`afirmación`** | `statement` | la última frase, sin interrogación ni exclamación: con punto |
+| **`matemática`** | `math` | la última frase, como fórmula (como el modo "deletrear") |
 | **`vale`** |  | acepta la sugerencia que aparece abajo |
 | **`escucha`** | `idle`, `listen`, `oye` | vuelve a modo escucha sin confirmar |
 
@@ -249,7 +253,7 @@ El modo fórmula escribe símbolos en vez de palabras. Se termina igual que el d
 | `verdadero` | `True` |
 | `falso` | `False` |
 
-Las letras se dicen por su nombre: **a**: a, ah; **b**: be; **c**: ce; **d**: de; **e**: e, eh; **f**: efe; **g**: ge; **h**: ache, hache; **i**: i; **j**: jota; **k**: ka, ca; **l**: ele; **m**: eme; **n**: ene; **o**: o, oh; **p**: pe; **q**: cu, ku; **r**: erre, ere; **s**: ese; **t**: te; **u**: u, uh; **v**: uve, ube, ue; **w**: uvedoble, ubedoble, uedoble; **x**: equis, ekis; **y**: igriega, ygriega; **z**: zeta, ceta.
+Las letras se dicen por su nombre: **a**: a, ah; **b**: be; **c**: ce; **d**: de; **e**: e, eh; **f**: efe; **g**: ge; **h**: ache, hache; **i**: i; **j**: jota; **k**: ka, ca; **l**: ele; **m**: eme; **n**: ene; **o**: o, oh; **p**: pe; **q**: cu, ku; **r**: erre, ere; **s**: ese; **t**: te; **u**: u, uh; **v**: uve, ube, ue; **w**: uvedoble, ubedoble, uedoble; **x**: equis, ekis; **y**: igriega, ygriega, ye; **z**: zeta, ceta.
 
 Palabras de pseudocódigo: `si` → `-->`, `entonces` → `THEN`, `sino` → `! -->`, `mientras` → `WHILE`, `para` → `FOR`, `función` → `F#`, `resultado` → `F<<`, `retorna` → `>>>`, `devuelve` → `>>>`, `recibe` → `<<<`, `imprime` → `P>>`, `variable` → `VAR`, `hacer` → `DO`, `repetir` → `2X`, `entero` → `INT`, `flotante` → `FLOAT`, `booleano` → `BOOL`, `binario` → `BOOL`, `and` → `AND`, `or` → `OR`, `corchetes` → `[`, `llaves` → `{`, `paréntesis` → `(`, `cierto` → `True`, `no` → `!`, `verdadero` → `True`, `falso` → `False`.
 
@@ -290,4 +294,4 @@ Solo valen con Kate delante. Todo lo demás de esta lista sigue valiendo tambié
 | **`ajuste de línea`** | F10 |
 | **`panel de terminal`** | F4 |
 
-*103 órdenes en total, sin contar las de Kate.*
+*107 órdenes en total, sin contar las de Kate.*

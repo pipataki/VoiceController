@@ -181,6 +181,54 @@
       "help_en": "corrects a word: 'correct <no.> <capital/initials/digits...>'",
       "alias_en": "correct"
     },
+    "formato_interrogacion": {
+      "action": "format_question",
+      "aliases": [
+        "interrogación",
+        "interrogacion",
+        "question"
+      ],
+      "scope": "dictating",
+      "help": "la última frase, como pregunta: ¿...?",
+      "help_en": "the last sentence, as a question: ...?",
+      "alias_en": "question"
+    },
+    "formato_exclamacion": {
+      "action": "format_exclamation",
+      "aliases": [
+        "exclamación",
+        "exclamacion",
+        "exclamation"
+      ],
+      "scope": "dictating",
+      "help": "la última frase, como exclamación: ¡...!",
+      "help_en": "the last sentence, as an exclamation: ...!",
+      "alias_en": "exclamation"
+    },
+    "formato_afirmacion": {
+      "action": "format_statement",
+      "aliases": [
+        "afirmación",
+        "afirmacion",
+        "statement"
+      ],
+      "scope": "dictating",
+      "help": "la última frase, sin interrogación ni exclamación: con punto",
+      "help_en": "the last sentence, with no question or exclamation mark: a full stop",
+      "alias_en": "statement"
+    },
+    "formato_matematica": {
+      "action": "format_math",
+      "aliases": [
+        "matemática",
+        "matematica",
+        "math"
+      ],
+      "scope": "dictating",
+      "help": "la última frase, como fórmula (como el modo \"deletrear\")",
+      "help_en": "the last sentence, as a formula (like \"math\" mode)",
+      "alias_en": "math"
+    },
     "aplicar_sugerencia": {
       "action": "apply_suggestion",
       "aliases": [

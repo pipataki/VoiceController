@@ -125,6 +125,12 @@ def to_symbolic(text_normalized: str, voc: Vocabulario) -> str:
     en modo fórmula lo que no es notación suele ser ruido del
     reconocedor, y colarlo dentro de una expresión la estropea más que
     perderlo.
+
+    Salvo una LETRA SUELTA, que en una fórmula es una variable, no ruido. El
+    reconocedor a veces da la letra tal cual ("p") y no su nombre ("pe"), y
+    se perdía: "a más tres igual a p" salía "a + 3 =" (15-sep-2026). Se
+    mira después de las tablas, así que la "y" de "i griega" o de
+    "treinta y cinco" sigue siendo lo que era.
     """
     tokens = text_normalized.split()
     out = []
@@ -156,6 +162,8 @@ def to_symbolic(text_normalized: str, voc: Vocabulario) -> str:
             out.append(voc.single[tok])
         elif tok in voc.variables:
             out.append(voc.variables[tok])
+        elif len(tok) == 1 and "a" <= tok <= "z":
+            out.append(tok + " ")
         else:
             out.append("")
         i += 1

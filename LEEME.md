@@ -165,7 +165,7 @@ libre cuesta 3,4 GB de memoria y cazar órdenes sueltas cuesta 155 MB.
 
 En Linux el instalador te la pregunta y baja los modelos que tocan. Para
 cambiarla, cámbiala en `config_local.py` y vuelve a pasar el instalador: bajará
-el grande de la nueva. En Windows el instalador pone el español, por ahora.
+el grande de la nueva. En Windows el instalador pone el español.
 
 ---
 

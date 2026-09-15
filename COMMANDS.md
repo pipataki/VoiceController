@@ -180,7 +180,7 @@ With no square, zoom or focus open, up, down, left and right are the arrow keys;
 
 ## Dictating
 
-"type" starts it: from then on, what you say goes whole into the Pre-Text, as a sentence. Speak normally: question and exclamation marks are added for you, and numbers come out as digits. While dictating, only the commands below work, said after a pause.
+"type" starts it: from then on, what you say goes whole into the Pre-Text, as a sentence. Speak normally: question and exclamation marks are added for you, and numbers come out as digits. If it gets it wrong, "question", "exclamation", "statement" or "math" redo the last sentence. While dictating, only the commands below work, said after a pause.
 
 | Say | Also works | What it does |
 |---|---|---|
@@ -189,6 +189,10 @@ With no square, zoom or focus open, up, down, left and right are the arrow keys;
 | **`reset`** | `borra`, `erase`, `borrar` | clears the Pre-Text and starts over |
 | **`correct`** | `corrige`, `corregir`, `fix` | corrects a word: 'correct &lt;no.&gt; &lt;capital/initials/digits...&gt;' |
 | **`correct <number> <how>`** | `corrige <número> <cómo>` | changes that word of the Pre-Text: capital, lowercase, acronym, digits or letters |
+| **`question`** | `interrogación` | the last sentence, as a question: ...? |
+| **`exclamation`** | `exclamación` | the last sentence, as an exclamation: ...! |
+| **`statement`** | `afirmación` | the last sentence, with no question or exclamation mark: a full stop |
+| **`math`** | `matemática` | the last sentence, as a formula (like "math" mode) |
 | **`vale`** |  | accepts the suggestion shown below |
 | **`listen`** | `idle`, `escucha`, `oye` | back to listening mode without confirming |
 
@@ -300,4 +304,4 @@ They only work with Kate in front, and are said in Spanish for now. Everything e
 | **`ajuste de línea`** | F10 |
 | **`panel de terminal`** | F4 |
 
-*103 commands in all, not counting Kate's.*
+*107 commands in all, not counting Kate's.*

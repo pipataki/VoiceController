@@ -86,3 +86,6 @@ VoiceController_Manual_*.pdf
 
 # ISOs de transferencia a la VM (se rehacen con tools/iso_para_vm.sh)
 paraVM.iso
+
+# Copias que deja tools/merge_commands.py al fusionar commands.json
+*.antes_merge

@@ -126,6 +126,7 @@ VARIABLES = {
     "uvedoble": "w ","ubedoble": "w ", "uedoble": "w ",
     "igriega": "y ",
     "ygriega": "y ",
+    "ye": "y ",
     "ekis": "x ",
 
 
