@@ -23,7 +23,7 @@ Patrón: MAJOR.MINOR.PATCH[-prerelease]
 Ejemplos: 1.0.0, 1.0.1-beta, 1.1.0-rc1
 """
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 __author__ = "pipataki"
 __author_email__ = "pipataki@pipataki.net"
 __license__ = "LGPL-3.0-or-later"

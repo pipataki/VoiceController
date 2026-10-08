@@ -25,6 +25,7 @@ main.py: Punto de entrada principal de VoiceController (REFACTORIZADO).
 import sys
 import json
 import locale
+import threading
 from pathlib import Path
 
 # --- CONFIGURACIÓN Y RUTAS ---
@@ -57,6 +58,7 @@ from command_router import CommandRouter
 from recognizer_worker import RecognizerWorker
 import gui as gui_module
 from microphone_manager import MicrophoneManager
+import cesion_microfono
 from webapp.app import start_background_server, stop_background_server
 
 
@@ -347,6 +349,22 @@ def main():
     router.set_switch_to_local_mic_callback(
         lambda: recognizer_worker.switch_to_device_requested.emit("original")
     )
+
+    # Pipe-Logic tiene preferencia sobre el micrófono: si lo pide, se le
+    # cede hasta que lo suelte (ver cesion_microfono.py).
+    if cesion_microfono.arrancar_servidor():
+        # Y también a mano: botón "Pipe-Logic Mic" (y su entrada en la
+        # bandeja) para cederlo o recuperarlo, comando "micro lógico" para
+        # cederlo. El aviso de cambio llega desde otro hilo:
+        # set_pipe_logic_mic va por señal. Sin servidor (Windows) no se
+        # conecta nada: el botón no sale, porque Pipe-Logic no podría
+        # devolver el micro y VoiceController se quedaría sordo.
+        window.set_pipe_logic_mic_callback(cesion_microfono.alternar_manual)
+        router.set_ceder_micro_pipe_logic_callback(
+            lambda: threading.Thread(target=cesion_microfono.ceder_manual,
+                                     daemon=True, name="cesion_manual").start()
+        )
+        cesion_microfono.al_cambiar(window.set_pipe_logic_mic)
 
     # --- LIMPIEZA AL CERRAR ---
     def cleanup():

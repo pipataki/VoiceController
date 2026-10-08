@@ -17,6 +17,7 @@ Everything you can say, by section. Each command has several forms and **all of 
 - Formulas
 - Programs and folders
 - In Kate (text editor)
+- Other commands
 
 ## The basics
 
@@ -185,7 +186,7 @@ With no square, zoom or focus open, up, down, left and right are the arrow keys;
 | Say | Also works | What it does |
 |---|---|---|
 | **`type`** | `dictar`, `dicta` | switches to typing mode (writing text by voice) |
-| **`enter`** | `entra`, `okey`, `ok`, `yes` | confirms what you dictated and writes it into the target app |
+| **`enter`** | `entra`, `entrar`, `okey`, `ok`, `yes` | confirms what you dictated and writes it into the target app |
 | **`reset`** | `borra`, `erase`, `borrar` | clears the Pre-Text and starts over |
 | **`correct`** | `corrige`, `corregir`, `fix` | corrects a word: 'correct &lt;no.&gt; &lt;capital/initials/digits...&gt;' |
 | **`correct <number> <how>`** | `corrige <número> <cómo>` | changes that word of the Pre-Text: capital, lowercase, acronym, digits or letters |
@@ -194,7 +195,7 @@ With no square, zoom or focus open, up, down, left and right are the arrow keys;
 | **`statement`** | `afirmación` | the last sentence, with no question or exclamation mark: a full stop |
 | **`math`** | `matemática` | the last sentence, as a formula (like "math" mode) |
 | **`vale`** |  | accepts the suggestion shown below |
-| **`listen`** | `idle`, `escucha`, `oye` | back to listening mode without confirming |
+| **`listen`** | `idle`, `escucha`, `escuchar`, `oye` | back to listening mode without confirming |
 
 ## Formulas
 
@@ -304,4 +305,10 @@ They only work with Kate in front, and are said in Spanish for now. Everything e
 | **`ajuste de línea`** | F10 |
 | **`panel de terminal`** | F4 |
 
-*107 commands in all, not counting Kate's.*
+## Other commands
+
+| Say | Also works | What it does |
+|---|---|---|
+| **`logic mic`** | `micro lógico`, `micrófono lógico`, `mic lógico` | lets Pipe-Logic have the microphone until it gives it back (take it back with the Pipe-Logic Mic button) |
+
+*108 commands in all, not counting Kate's.*

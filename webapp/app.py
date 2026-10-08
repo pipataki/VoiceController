@@ -1233,6 +1233,8 @@ def _capture_desktop_frame() -> bytes:
 
 def _get_or_create_self_signed_cert():
     """Genera (una sola vez) un certificado autofirmado persistente."""
+    # Pipe-Logic (https://pipataki.net/pipe-logic.html, certificado.py) lleva una copia
+    # adaptada: si se arregla algo aqui, mirar si toca alli tambien.
     if CERT_PATH and KEY_PATH and os.path.exists(CERT_PATH) and os.path.exists(KEY_PATH):
         return CERT_PATH, KEY_PATH
 

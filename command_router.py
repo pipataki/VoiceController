@@ -567,6 +567,7 @@ class CommandRouter:
         self._set_language_mode = lambda mode: None  # se conecta desde main.py con set_language_mode_callback()
         self._set_dictating = lambda flag: None  # se conecta desde main.py con set_dictating_callback()
         self._switch_to_local_mic = lambda: None  # se conecta desde main.py con set_switch_to_local_mic_callback()
+        self._ceder_micro_pipe_logic = lambda: None  # se conecta desde main.py con set_ceder_micro_pipe_logic_callback()
         # ensure UI reflects initial formuling state
         try:
             self.gui.update_formuling_indicator(False)
@@ -668,6 +669,15 @@ class CommandRouter:
         que se activa solo, sin comando de voz, en cuanto llega el primer
         audio del móvil)."""
         self._switch_to_local_mic = fn
+
+    def set_ceder_micro_pipe_logic_callback(self, fn):
+        """fn() -> sin argumentos, normalmente cesion_microfono.ceder_manual.
+        Comando de voz "micro lógico" (acción "ceder_micro_pipe_logic"):
+        suelta el micrófono para Pipe-Logic hasta que lo devuelva. Por voz
+        solo se cede: mientras está cedido no se oye nada, así que se
+        recupera con el botón "Pipe-Logic Mic" o cuando Pipe-Logic lo
+        suelta (ver cesion_microfono.py, "Cesión A MANO")."""
+        self._ceder_micro_pipe_logic = fn
 
     def _set_state(self, new_state: str):
         self.state = new_state
@@ -3163,7 +3173,7 @@ class CommandRouter:
             self._sesion()["ts"] = time.monotonic()
             self._sesion()["fallos"] = 0
             self._set_awaiting_login(False)
-            print(f"[command_router] santo y seña CORRECTO: {text!r}")
+            print("[command_router] santo y seña CORRECTO: ********")
             # Confirmación EXPLÍCITA, hablada y en pantalla. Antes la única
             # señal era que el aviso desapareciera, que es una señal muda:
             # trabajando sin mirar el monitor no había forma de saber
@@ -3185,7 +3195,7 @@ class CommandRouter:
         if speaker_verdict == _UNKNOWN:
             # ni acierto ni fallo: no había suficiente voz que analizar
             print(f"[command_router] santo y seña: frase demasiado corta "
-                  f"para verificar ({text!r}) -- no cuenta")
+                  f"para verificar ({len(text.split())} palabras) -- no cuenta")
             try:
                 self.gui.update_suggestion(
                     "🔐 No he podido verificar tu voz: di una frase MÁS LARGA.")
@@ -3196,7 +3206,7 @@ class CommandRouter:
         self._sesion()["fallos"] += 1
         maximo = getattr(config, "VOICE_LOGIN_MAX_FAILURES", 3)
         print(f"[command_router] santo y seña INCORRECTO "
-              f"({self._sesion()["fallos"]}/{maximo}): {text!r}")
+              f"({self._sesion()["fallos"]}/{maximo}): ********")
         if self._sesion()["fallos"] >= maximo:
             print("[command_router] *** demasiados santos y señas fallidos ***")
             self._trigger_intruder_abort()
@@ -3877,7 +3887,7 @@ class CommandRouter:
             # que esto es exactamente la misma comprobacion que hace el
             # arranque -- ni mas floja ni mas dura.
             if speaker_verdict == _HIM:
-                print(f"[command_router] santo y sena en espera: {text!r}")
+                print("[command_router] santo y sena en espera: ********")
                 self._standby = False
                 self._dudando = False
                 self._pintar_escucha()
@@ -4212,6 +4222,14 @@ class CommandRouter:
                 except Exception:
                     pass
                 return
+            if control_action == "ceder_micro_pipe_logic":
+                # "micro lógico": el micrófono para Pipe-Logic hasta que lo
+                # devuelva (ver set_ceder_micro_pipe_logic_callback)
+                try:
+                    self._ceder_micro_pipe_logic()
+                except Exception as exc:
+                    print(f"[command_router] error cediendo el micro a Pipe-Logic: {exc!r}")
+                return
             if control_action == "start_dictation":
                 self._deselect_board_cell()
                 self._set_state("DICTATING")
@@ -4515,6 +4533,12 @@ class CommandRouter:
                 self._switch_to_local_mic()
             except Exception:
                 pass
+            return
+        if control_action == "ceder_micro_pipe_logic":
+            try:
+                self._ceder_micro_pipe_logic()
+            except Exception as exc:
+                print(f"[command_router] error cediendo el micro a Pipe-Logic: {exc!r}")
             return
         if control_action == "reset":
             # borra el Pre-Texto pero se queda dictando (no cambia de estado),

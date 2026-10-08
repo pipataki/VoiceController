@@ -40,6 +40,12 @@ BACKEND = "auto"
 
 INPUT_DEVICE = None
 
+# Ceder el micrófono a otra aplicación (Pipe-Logic) cuando lo pida, y
+# recuperarlo cuando lo suelte. Ver cesion_microfono.py para el protocolo.
+# CEDER_MICROFONO_SOCKET = None usa $XDG_RUNTIME_DIR/voicecontroller/microfono.sock
+CEDER_MICROFONO_ENABLED = True
+CEDER_MICROFONO_SOCKET = None
+
 # Sample rate (Hz)
 SAMPLE_RATE = 16000
 

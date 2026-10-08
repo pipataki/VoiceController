@@ -29,6 +29,7 @@ Patrón:
 from PySide6.QtCore import QObject, Signal, Slot
 from voice_recognizer import DualLanguageRecognizer
 from microphone_manager import MicrophoneManager
+import cesion_microfono
 import config
 
 
@@ -87,6 +88,7 @@ class RecognizerWorker(QObject):
                 on_final=self._on_final,
                 on_audio_level=self._on_audio_level,
             )
+            cesion_microfono.registrar_reconocedor(self._recognizer)
             
             # Iniciar la captura de audio
             self._recognizer.start()

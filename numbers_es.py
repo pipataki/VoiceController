@@ -13,6 +13,9 @@
 # Deberias haber recibido una copia de la LGPL junto a este programa. Si
 # no, ver <https://www.gnu.org/licenses/>.
 
+# Pipe-Logic (https://pipataki.net/pipe-logic.html, numeros.py) lleva una copia de este
+# fichero: si se arregla algo aqui, mirar si toca alli tambien.
+
 """
 Convierte números dictados en español (como palabras: "cuarenta y cinco")
 a enteros, token a token, para poder parsear frases tipo:

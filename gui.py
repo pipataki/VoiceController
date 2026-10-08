@@ -108,6 +108,7 @@ def _load_labels() -> dict:
         return {
             "es": {"active_prefix": "Activo", "cell_label": "Celda", "btn_enter": "Entrar",
                    "btn_reset": "Borrar", "btn_correct": "Corregir", "btn_idle": "Escucha", "btn_close": "Cerrar",
+                   "btn_pipe_logic": "Pipe-Logic Mic",
                    "btn_copy": "Copiar", "btn_paste": "Pegar", "btn_select": "Seleccion",
                    "btn_clear": "Vaciar", "texto_label": "Texto:",
                    "board_placeholder": "(sin tablero todavia)"},
@@ -271,6 +272,7 @@ class GUI(QWidget):
     sig_set_board_active = Signal(bool)              # activa/desactiva el compás de 8 direcciones
     sig_show_help = Signal(str, object, int)         # (titulo, lineas, duracion_ms) -- ventana de ayuda
     sig_hide_help = Signal()
+    sig_pipe_logic_mic = Signal(bool)                # micrófono cedido a mano a Pipe-Logic
 
     # A partir de cuántas líneas la ventana de ayuda pasa a dos columnas.
     #
@@ -330,6 +332,9 @@ class GUI(QWidget):
         self._pause_notified = True  # no hay nada que sugerir al arrancar
         self._pause_callback = None  # se conecta con set_pause_callback()
         self._touch_callback = None  # se conecta con set_touch_callback()
+        self._pipe_logic_mic_callback = None  # se conecta con set_pipe_logic_mic_callback()
+        self._pipe_logic_mic = False
+        self._pipe_logic_mic_action = None   # su entrada en la bandeja, si la hay
         self._labels_all = _load_labels()
         self._ui_lang = "es"
         self._board_mode = "overview"  # "overview" | "cell" | "zoom_out" | "foco"
@@ -668,6 +673,30 @@ class GUI(QWidget):
 
         layout.addStretch()
 
+        # --- Ceder el micrófono a Pipe-Logic (ver cesion_microfono.py,
+        # "Cesión A MANO"). Fila propia y no en la de abajo: aquella es solo
+        # para los 5 básicos, y con 356 px de ancho no cabe un sexto.
+        # Mientras está cedido se resalta; pulsarlo otra vez lo recupera.
+        self._pipe_logic_btn_style = (
+            "QPushButton { background: #1a1a1a; color: #a8f0c0; border: 1px solid #2ecc71; "
+            "border-radius: 4px; padding: 4px 8px; font-size: 12px; } "
+            "QPushButton:hover { background: #163a24; }"
+        )
+        self._pipe_logic_btn_style_on = (
+            "QPushButton { background: #2ecc71; color: #0a0a0a; border: 1px solid #2ecc71; "
+            "border-radius: 4px; padding: 4px 8px; font-size: 12px; font-weight: bold; }"
+        )
+        self.btn_pipe_logic = QPushButton("🎙 Pipe-Logic Mic")
+        self.btn_pipe_logic.setStyleSheet(self._pipe_logic_btn_style)
+        self.btn_pipe_logic.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.btn_pipe_logic.setToolTip("Deja el micrófono a Pipe-Logic hasta que lo devuelva")
+        self.btn_pipe_logic.clicked.connect(self._on_pipe_logic_button)
+        self.btn_pipe_logic.setVisible(False)  # sale con set_pipe_logic_mic_callback()
+        pipe_logic_row = QHBoxLayout()
+        pipe_logic_row.setContentsMargins(0, 0, 0, 0)
+        pipe_logic_row.addWidget(self.btn_pipe_logic)
+        layout.addLayout(pipe_logic_row)
+
         # --- Fila inferior: SOLO los 5 básicos para manejar el dictado
         # (ver boceto del manual) -- Entrar / Borrar / Corregir / Escucha /
         # Cerrar. Nada más aquí; la edición del Texto (copiar/pegar/...)
@@ -727,6 +756,7 @@ class GUI(QWidget):
         self.sig_update_audio_level.connect(self._do_update_audio_level)
         self.sig_show_help.connect(self._do_show_help)
         self.sig_hide_help.connect(self._do_hide_help)
+        self.sig_pipe_logic_mic.connect(self._do_set_pipe_logic_mic)
 
     # ---------- API pública thread-safe (llamada desde command_router / actions) ----------
 
@@ -1293,6 +1323,39 @@ class GUI(QWidget):
         (LED apagado); False mientras hay energía suficiente (LED verde)."""
         self.sig_update_audio_level.emit(is_silent, rms)
 
+    def set_pipe_logic_mic_callback(self, fn):
+        """fn() -> sin argumentos: el botón "Pipe-Logic Mic" y su entrada de
+        la bandeja (normalmente cesion_microfono.alternar_manual). Sin
+        llamar a esto (Windows: no hay cesión), ni el botón ni la entrada
+        de la bandeja se ven."""
+        self._pipe_logic_mic_callback = fn
+        self.btn_pipe_logic.setVisible(fn is not None)
+        if self._pipe_logic_mic_action is not None:
+            self._pipe_logic_mic_action.setVisible(fn is not None)
+
+    def set_pipe_logic_mic(self, cedido: bool):
+        """Thread-safe: refleja en el botón y la bandeja si el micrófono
+        está cedido a mano a Pipe-Logic."""
+        self.sig_pipe_logic_mic.emit(bool(cedido))
+
+    def _on_pipe_logic_button(self, _checked=False):
+        if self._pipe_logic_mic_callback:
+            self._pipe_logic_mic_callback()
+        else:
+            print("[gui] botón Pipe-Logic Mic sin conectar")
+        # La bandeja marca la casilla sola al pulsarla: se deja como diga
+        # el estado de verdad, que llega después por set_pipe_logic_mic().
+        if self._pipe_logic_mic_action is not None:
+            self._pipe_logic_mic_action.setChecked(self._pipe_logic_mic)
+
+    def _do_set_pipe_logic_mic(self, cedido: bool):
+        self._pipe_logic_mic = cedido
+        self.btn_pipe_logic.setStyleSheet(
+            self._pipe_logic_btn_style_on if cedido else self._pipe_logic_btn_style)
+        self._apply_labels()
+        if self._pipe_logic_mic_action is not None:
+            self._pipe_logic_mic_action.setChecked(cedido)
+
     def set_manual_action_callback(self, fn):
         """Conecta los botones Enter/Reset/Idle y el menú de la bandeja a
         un callback real (normalmente router.manual_action). Sin esto los
@@ -1717,6 +1780,8 @@ class GUI(QWidget):
         self.btn_correct.setText(f"🩹 {get('btn_correct', 'Corregir')}")
         self.btn_idle.setText(f"🎧 {get('btn_idle', 'Escucha')}")
         self.btn_close.setText(f"✕ {get('btn_close', 'Cerrar')}")
+        self.btn_pipe_logic.setText(f"🎙 {get('btn_pipe_logic', 'Pipe-Logic Mic')}"
+                                    + (" ✓" if self._pipe_logic_mic else ""))
         self.btn_copy_texto.setText(f"📋 {get('btn_copy', 'Copiar')}")
         self.btn_paste_texto.setText(f"📤 {get('btn_paste', 'Pegar')}")
         self.btn_select_texto.setText(f"🖱 {get('btn_select', 'Seleccion')}")
@@ -2077,6 +2142,15 @@ class GUI(QWidget):
             send_idle = QAction("Enviar Idle", self)
             send_idle.triggered.connect(lambda: self._on_manual_action("idle"))
             menu.addAction(send_idle)
+
+            # Lo mismo que el botón "Pipe-Logic Mic": con la ventana oculta
+            # (modo servicio) es la única forma sin voz de devolverse el
+            # micrófono, y mientras está cedido no hay voz.
+            self._pipe_logic_mic_action = QAction("Pipe-Logic Mic", self)
+            self._pipe_logic_mic_action.setCheckable(True)
+            self._pipe_logic_mic_action.setVisible(self._pipe_logic_mic_callback is not None)
+            self._pipe_logic_mic_action.triggered.connect(self._on_pipe_logic_button)
+            menu.addAction(self._pipe_logic_mic_action)
 
             # --- Filtro por voz: SALIDA DE EMERGENCIA ---
             # Tiene que estar aquí, en la bandeja, y no solo como comando

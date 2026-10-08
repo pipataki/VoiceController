@@ -17,6 +17,7 @@ Todo lo que se puede decir, por secciones. Cada orden tiene varias formas y **to
 - Fórmulas
 - Programas y carpetas
 - En Kate (editor de texto)
+- Otras órdenes
 
 ## Lo básico
 
@@ -185,7 +186,7 @@ Con "dictar" empiezas: desde ahí, lo que dices va entero al Pre-Texto, como fra
 | Di | También vale | Qué hace |
 |---|---|---|
 | **`dictar`** | `type`, `dicta` | pasa a modo dictado (escribir texto por voz) |
-| **`entra`** | `enter`, `okey`, `ok`, `yes` | confirma lo dictado y lo escribe en la app de destino |
+| **`entra`** | `entrar`, `enter`, `okey`, `ok`, `yes` | confirma lo dictado y lo escribe en la app de destino |
 | **`borra`** | `reset`, `erase`, `borrar` | borra el Pre-Texto y empieza de cero |
 | **`corrige`** | `corregir`, `correct`, `fix` | corrige una palabra: 'corrige &lt;nº&gt; &lt;mayúscula/siglas/cifras...&gt;' |
 | **`corrige <número> <cómo>`** |  | cambia esa palabra del Pre-Texto: mayúscula, minúscula, siglas, cifras o letras. "corrige 3 mayúscula" |
@@ -194,7 +195,7 @@ Con "dictar" empiezas: desde ahí, lo que dices va entero al Pre-Texto, como fra
 | **`afirmación`** | `statement` | la última frase, sin interrogación ni exclamación: con punto |
 | **`matemática`** | `math` | la última frase, como fórmula (como el modo "deletrear") |
 | **`vale`** |  | acepta la sugerencia que aparece abajo |
-| **`escucha`** | `idle`, `listen`, `oye` | vuelve a modo escucha sin confirmar |
+| **`escucha`** | `idle`, `listen`, `escuchar`, `oye` | vuelve a modo escucha sin confirmar |
 
 ## Fórmulas
 
@@ -294,4 +295,10 @@ Solo valen con Kate delante. Todo lo demás de esta lista sigue valiendo tambié
 | **`ajuste de línea`** | F10 |
 | **`panel de terminal`** | F4 |
 
-*107 órdenes en total, sin contar las de Kate.*
+## Otras órdenes
+
+| Di | También vale | Qué hace |
+|---|---|---|
+| **`micro lógico`** | `micrófono lógico`, `mic lógico`, `logic mic` | deja el micrófono a Pipe-Logic hasta que lo devuelva (se recupera con el botón Pipe-Logic Mic) |
+
+*108 órdenes en total, sin contar las de Kate.*

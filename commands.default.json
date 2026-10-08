@@ -142,6 +142,7 @@
       "action": "confirm",
       "aliases": [
         "entra",
+        "entrar",
         "enter",
         "okey",
         "ok",
@@ -244,6 +245,7 @@
         "idle",
         "listen",
         "escucha",
+        "escuchar",
         "oye",
         "idel",
         "lisen"
@@ -725,6 +727,21 @@
       "help": "vuelve al micrófono del PC (tras usar el del móvil)",
       "help_en": "back to the computer's microphone (after using the phone's)",
       "alias_en": "local mic"
+    },
+    "micro_logico": {
+      "action": "ceder_micro_pipe_logic",
+      "aliases": [
+        "micro lógico",
+        "micro logico",
+        "micrófono lógico",
+        "microfono logico",
+        "mic lógico",
+        "logic mic"
+      ],
+      "scope": "any",
+      "help": "deja el micrófono a Pipe-Logic hasta que lo devuelva (se recupera con el botón Pipe-Logic Mic)",
+      "help_en": "lets Pipe-Logic have the microphone until it gives it back (take it back with the Pipe-Logic Mic button)",
+      "alias_en": "logic mic"
     },
     "_comentario_ventanas": "Acciones sobre la VENTANA QUE TENGA EL FOCO (la de delante), no sobre VoiceController. Van via kdotool (KWin), no por atajo de teclado, porque minimizar/maximizar no tienen atajo estandar. Si la ventana con foco fuera el propio VoiceController, la accion se ignora a proposito.",
     "minimizar_ventana": {
