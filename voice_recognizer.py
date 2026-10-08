@@ -34,6 +34,7 @@ import numpy as np
 import sounddevice as sd
 from vosk import KaldiRecognizer, Model, SetLogLevel, SpkModel
 
+import cesion_microfono
 import config
 import prosody
 import speaker_id
@@ -182,6 +183,13 @@ class DualLanguageRecognizer:
         self._thread = None
         self._state_lock = threading.Lock()
         self._running = False
+
+        # True si el micrófono LOCAL se ha quedado sin abrir (o se ha
+        # cerrado) por habérselo cedido a otra aplicación: al devolverlo hay
+        # que volver a abrirlo. Si en ese rato se pasa al móvil, se olvida
+        # (ver cesion_microfono y ceder_microfono()).
+        self._reabrir_al_devolver = False
+        self._cesion_lock = threading.Lock()
 
         # La lengua MATERNA manda: es la que dicta y la que cuenta.
         # Ver config.LENGUA_MATERNA.
@@ -573,6 +581,13 @@ class DualLanguageRecognizer:
         with self._state_lock:
             if self._running:
                 return
+            if cesion_microfono.cedido():
+                # Otra aplicación tiene el micrófono pedido: se abrirá
+                # cuando lo devuelva (recuperar_microfono()).
+                self._reabrir_al_devolver = True
+                print("[voice_recognizer] micrófono cedido a otra aplicación: "
+                      "se abrirá cuando lo devuelva")
+                return
 
             self._stop_event.clear()
             self._drain_queue()
@@ -670,6 +685,10 @@ class DualLanguageRecognizer:
 
     def stop(self):
         with self._state_lock:
+            # Un stop() explícito (salir, cambiar de micrófono, pasar al
+            # móvil) anula la reapertura pendiente; quien quiera el local
+            # otra vez llamará a start().
+            self._reabrir_al_devolver = False
             if not self._running:
                 return
             # invalidar el testigo ANTES que nada: aunque el join() de abajo
@@ -744,6 +763,24 @@ class DualLanguageRecognizer:
         print("[voice_recognizer] cambiando a micrófono de red (móvil)")
         self.stop()
         self.start_network()
+
+    def ceder_microfono(self):
+        """Suelta el micrófono LOCAL porque otra aplicación lo pide (ver
+        cesion_microfono). Vuelve cuando ya está cerrado. Con el micrófono
+        del móvil no hay nada que soltar y se sigue escuchando por él."""
+        with self._cesion_lock:
+            with self._state_lock:
+                local = self._running and self._mode == "device"
+            if local:
+                self.stop()
+                self._reabrir_al_devolver = True
+
+    def recuperar_microfono(self):
+        """La otra aplicación ha soltado el micrófono: se vuelve a abrir si
+        se estaba usando el local cuando se cedió (o se pidió entretanto)."""
+        with self._cesion_lock:
+            if self._reabrir_al_devolver and not cesion_microfono.cedido():
+                self.start()
 
     # ---------- internos ----------
 

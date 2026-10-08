@@ -57,6 +57,7 @@ from command_router import CommandRouter
 from recognizer_worker import RecognizerWorker
 import gui as gui_module
 from microphone_manager import MicrophoneManager
+import cesion_microfono
 from webapp.app import start_background_server, stop_background_server
 
 
@@ -347,6 +348,10 @@ def main():
     router.set_switch_to_local_mic_callback(
         lambda: recognizer_worker.switch_to_device_requested.emit("original")
     )
+
+    # Pipe-Logic tiene preferencia sobre el micrófono: si lo pide, se le
+    # cede hasta que lo suelte (ver cesion_microfono.py).
+    cesion_microfono.arrancar_servidor()
 
     # --- LIMPIEZA AL CERRAR ---
     def cleanup():
